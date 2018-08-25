@@ -14,12 +14,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/', routes);
 
 // if those routes didn't work, forward them to 404 handler
-app.use(errorHandlers.notFound);
+// app.use(errorHandlers.notFound);
 
 // otherwise, it's a bad error we didn't expect
-// if (app.get('env') === 'development') {
+if (app.get('env') === 'development') {
   app.use(errorHandlers.developmentErrors);
-// }
+}
 
 // production error handler
 // app.use(errorHandlers.productionErrors);
