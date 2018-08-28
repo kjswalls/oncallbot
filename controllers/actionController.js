@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const fetch = require('node-fetch');
 
 const Engineer = mongoose.model('Engineer');
 const getEngineersAsOptions = async () => {
@@ -76,7 +77,16 @@ const renderAddEngineerModal = (slackReq) => {
     },
   };
 
-  return response;
+  return fetch('https://slack.com/api/dialog.open', {
+    method: 'POST',
+    body: JSON.stringify(response),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${slackReq.token}`
+    },
+  });
+
+  // return response;
 };
 
 const renderAddReleaseModal = (slackReq) => {
@@ -128,13 +138,12 @@ exports.handleActions = async (req, res) => {
   } else if (slackReq.callback_id === 'add_release_or_engineer') {
     const buttonPressed = slackReq.actions[0].value;
     if (buttonPressed === 'add_engineer') {
-      response = renderAddEngineerModal(slackReq);
-    } else if (buttonPressed === 'add_release') {
+      res.send('');
+      return renderAddEngineerModal(slackReq);
+    }
+
+    if (buttonPressed === 'add_release') {
       response = renderAddReleaseModal(slackReq);
-      res.set({
-        'Content-type': 'application/json',
-        Authorization: `Bearer ${req.body.token}`,
-      });
     }
   } else if (slackReq.callback_id === 'add_engineer_form') {
     response = addEngineer(slackReq);
