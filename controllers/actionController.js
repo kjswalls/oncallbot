@@ -7,7 +7,11 @@ const getEngineersAsOptions = async () => {
 };
 
 const addEngineer = async (slackReq) => {
-  const engineer = await (new Engineer().save());
+  console.log('from form', slackReq);
+  const formData = slackReq.submission;
+  const engineer = await (new Engineer(formData).save());
+
+  const response = await fetch(slackReq.response_url);
 };
 
 const handleReleaseSelection = (slackReq) => {
@@ -29,24 +33,24 @@ const handleReleaseSelection = (slackReq) => {
   return response;
 };
 
-const renderAddEngineerModal = (slackReq) => {
-  const response = {
+const renderAddEngineerModal = async (slackReq) => {
+  const dialog = {
     trigger_id: slackReq.trigger_id,
     dialog: {
       callback_id: 'add_engineer_form',
-      title: 'Add an engineer to the pool',
+      title: 'Add an engineer',
       submit_label: 'Add',
       elements: [
         {
           type: 'text',
           label: 'Name',
-          name: 'engineer_name',
+          name: 'name',
           placeholder: 'Kate McKinnon',
         },
         {
           type: 'select',
           label: 'Discipline',
-          name: 'engineer_discipline',
+          name: 'discipline',
           options: [
             {
               label: 'Front End',
@@ -61,7 +65,7 @@ const renderAddEngineerModal = (slackReq) => {
         {
           type: 'select',
           label: 'Pod',
-          name: 'engineer_pod',
+          name: 'pod',
           options: [
             {
               label: 'Consumer Tools',
@@ -77,16 +81,17 @@ const renderAddEngineerModal = (slackReq) => {
     },
   };
 
-  return fetch('https://slack.com/api/dialog.open', {
+  const response = await fetch('https://slack.com/api/dialog.open', {
     method: 'POST',
-    body: JSON.stringify(response),
+    body: JSON.stringify(dialog),
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${slackReq.token}`
+      'Content-Type': 'application/json; charset=utf-8',
+      'Authorization': `Bearer ${process.env.SLACK_ACCESS_TOKEN}`
     },
   });
 
-  // return response;
+  const data = await response.json();
+  return data;
 };
 
 const renderAddReleaseModal = (slackReq) => {
@@ -139,14 +144,17 @@ exports.handleActions = async (req, res) => {
     const buttonPressed = slackReq.actions[0].value;
     if (buttonPressed === 'add_engineer') {
       res.send('');
-      return renderAddEngineerModal(slackReq);
+      const data = await renderAddEngineerModal(slackReq);
+      return data;
     }
 
     if (buttonPressed === 'add_release') {
       response = renderAddReleaseModal(slackReq);
     }
   } else if (slackReq.callback_id === 'add_engineer_form') {
-    response = addEngineer(slackReq);
+    res.send('');
+    const data = await addEngineer(slackReq);
+    return data;
   }
 
   return res.json(response);

@@ -1,13 +1,3 @@
-// const engineers = [
-//   { name: 'Willem Jager', discipline: 'Back End', pod: 'Consumer Tools', slackTag: 'willem.jager' },
-//   { name: 'Raghav Vijendran', discipline: 'Back End', pod: 'Consumer Engagement' },
-//   { name: 'Frank Chung', discipline: 'Back End', pod: 'Consumer Tools' },
-//   { name: 'Jonathan Anstett', discipline: 'Back End', pod: 'Consumer Engagement' },
-//   { name: 'Hai Phan', discipline: 'Front End', pod: 'Consumer Tools' },
-//   { name: 'Renee Gallison', discipline: 'Front End', pod: 'Consumer Engagement' },
-//   { name: 'Kirby Walls', discipline: 'Front End', pod: 'Consumer Tools' },
-// ];
-
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
