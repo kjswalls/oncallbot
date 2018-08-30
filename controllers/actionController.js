@@ -2,16 +2,72 @@ const mongoose = require('mongoose');
 const fetch = require('node-fetch');
 
 const Engineer = mongoose.model('Engineer');
-const getEngineersAsOptions = async () => {
 
+const getEngineersAsOptions = async (discipline = null) => {
+  // if there's no discipline passed, just get all engineers where discipline is not null
+  let disciplineQuery = { discipline } || { $ne: null };
+  const engineers = await Engineer.find(disciplineQuery);
+  if (!engineers) return [];
+
+  console.log(engineers);
 };
 
 const addEngineer = async (slackReq) => {
-  console.log('from form', slackReq);
   const formData = slackReq.submission;
   const engineer = await (new Engineer(formData).save());
 
-  const response = await fetch(slackReq.response_url);
+  const message = {
+    response_type: 'in_channel',
+    channel: slackReq.channel_id,
+    text: `Engineer *${formData.name}* added :ok_hand:`,
+    attachments: [
+      {
+        text: 'Choose a release to view',
+        fallback: 'You are unable to choose a release',
+        color: '#2c963f',
+        attachment_type: 'default',
+        callback_id: 'release_selection',
+        actions: [{
+          name: 'release_select_menu',
+          text: 'Choose a release...',
+          type: 'select',
+          // options: getReleasesAsOptions(),
+        }],
+      },
+      {
+        text: '',
+        fallback: 'You are unable to add a release or an engineer',
+        color: '#2c963f',
+        attachment_type: 'default',
+        callback_id: 'add_release_or_engineer',
+        actions: [
+          {
+            name: 'add_release_button',
+            text: 'Add a release',
+            type: 'button',
+            value: 'add_release',
+          },
+          {
+            name: 'add_engineer_button',
+            text: 'Add an engineer to the pool',
+            type: 'button',
+            value: 'add_engineer',
+          },
+        ],
+      }
+    ],
+  };
+
+  const response = await fetch(slackReq.response_url, {
+    method: 'POST',
+    body: JSON.stringify(message),
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Authorization': `Bearer ${process.env.SLACK_ACCESS_TOKEN}`
+    },
+  });
+  const data = await response.json();
+  console.log(data);
 };
 
 const handleReleaseSelection = (slackReq) => {
@@ -94,8 +150,9 @@ const renderAddEngineerModal = async (slackReq) => {
   return data;
 };
 
-const renderAddReleaseModal = (slackReq) => {
-  const response = {
+const renderAddReleaseModal = async (slackReq) => {
+  const engineerOptions = getEngineersAsOptions('back_end');
+  const dialog = {
     trigger_id: slackReq.trigger_id,
     dialog: {
       callback_id: 'add_release_form',
@@ -105,13 +162,13 @@ const renderAddReleaseModal = (slackReq) => {
         {
           type: 'text',
           label: 'Name',
-          name: 'release_name',
+          name: 'name',
           placeholder: 'e.g. 18.10.1',
         },
         {
           type: 'text',
           label: 'Date',
-          name: 'release_date',
+          name: 'date',
           placeholder: 'M/D',
           max_length: 5,
           hint: 'You can only add a release for the current year',
@@ -121,13 +178,24 @@ const renderAddReleaseModal = (slackReq) => {
           label: 'Back End Engineer',
           name: 'back_end_primary',
           optional: true,
-          option_groups: getEngineersAsOptions(),
+          // options: getEngineersAsOptions('back_end'),
         },
       ],
     },
   };
 
-  return response;
+  const response = await fetch('https://slack.com/api/dialog.open', {
+    method: 'POST',
+    body: JSON.stringify(dialog),
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Authorization': `Bearer ${process.env.SLACK_ACCESS_TOKEN}`
+    },
+  });
+
+  const data = await response.json();
+  console.log(data);
+  return data;
 };
 
 exports.handleActions = async (req, res) => {
@@ -149,7 +217,9 @@ exports.handleActions = async (req, res) => {
     }
 
     if (buttonPressed === 'add_release') {
-      response = renderAddReleaseModal(slackReq);
+      res.send('');
+      const data = await renderAddReleaseModal(slackReq);
+      return data;
     }
   } else if (slackReq.callback_id === 'add_engineer_form') {
     res.send('');
