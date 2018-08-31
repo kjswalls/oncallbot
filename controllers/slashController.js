@@ -8,7 +8,6 @@ const Release = mongoose.model('Release');
 exports.oncall = async (req, res) => {
   const slackReq = req.body;
   const releaseOptions = await releases.getReleasesAsOptions();
-  console.log(releases);
 
   const response = {
     response_type: 'in_channel',

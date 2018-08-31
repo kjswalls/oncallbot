@@ -17,15 +17,22 @@ const releaseSchema = new Schema({
   }
 });
 
-releaseSchema.virtual('engineers', {
+releaseSchema.virtual('primaryEngineers', {
   ref: 'Engineer',
   localField: '_id',
-  foreignField: 'releases'
+  foreignField: 'releasePrimary'
 });
 
-// populate engineer field on release schema
+releaseSchema.virtual('backupEngineers', {
+  ref: 'Engineer',
+  localField: '_id',
+  foreignField: 'releaseBackup'
+});
+
+// populate engineer fields on release schema
 function autopopulate(next) {
-  this.populate('engineers');
+  this.populate('primaryEngineers');
+  this.populate('backupEngineers');
   next();
 }
 

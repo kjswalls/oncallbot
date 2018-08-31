@@ -22,9 +22,10 @@ exports.handleActions = async (req, res) => {
    **/
 
   switch(callbackId) {
-    case 'release_selection': // select a release to view from initial menu
-      response = releases.handleReleaseSelection(slackReq);
-      break;
+    case 'release_selection': // release selected to view from initial menu
+      res.send('');
+      response = await releases.showRelease(slackReq);
+      return response;
 
     case 'add_release_or_engineer': // either of two buttons "Add Release" or "Add Engineer" pressed
       const buttonPressed = slackReq.actions[0].value;

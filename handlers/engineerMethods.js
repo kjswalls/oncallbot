@@ -8,7 +8,7 @@ exports.getEngineersAsOptions = async (discipline = null) => {
   // if there's no discipline passed, just get all engineers
   let disciplineQuery = discipline ? discipline : { $exists: true };
   const engineers = await Engineer.find({ discipline: disciplineQuery });
-  if (!engineers) return [];
+  // if (!engineers) return [];
 
   const frontEndEngineers = engineers
     .filter(engineer => engineer.discipline === 'front_end')
@@ -160,4 +160,22 @@ exports.renderAddEngineerModal = async (slackReq) => {
 
   // const data = await response.json();
   // return data;
+};
+
+exports.getPrimaryEngineers = async (releaseId) => {
+  const engineers = await Engineer
+    .find({ releasePrimary: releaseId });
+    // .sort({ date: 'desc' });
+  // if (!engineers) return [];
+  console.log(engineers);
+  return engineers;
+};
+
+exports.getBackupEngineers = async (releaseId) => {
+  const engineers = await Engineer
+    .find({ releaseBackup: releaseId });
+    // .sort({ date: 'desc' });
+  // if (!engineers) return [];
+  console.log(engineers);
+  return engineers;
 };

@@ -22,10 +22,16 @@ const engineerSchema = new Schema({
   }
 });
 
-engineerSchema.virtual('releases', {
+engineerSchema.virtual('releasePrimary', {
   ref: 'Release',
   localField: '_id',
-  foreignField: 'engineers'
+  foreignField: 'primaryEngineers'
+});
+
+engineerSchema.virtual('releaseBackup', {
+  ref: 'Release',
+  localField: '_id',
+  foreignField: 'backupEngineers'
 });
 
 // populate engineer field on release schema
