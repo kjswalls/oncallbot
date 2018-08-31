@@ -1,6 +1,6 @@
 const express = require('express');
-const { log } = require('../helpers/utils');
-const { catchErrors } = require('../helpers/errorHandlers');
+const { log } = require('../handlers/utils');
+const { catchErrors } = require('../handlers/errorHandlers');
 const slashController = require('../controllers/slashController');
 const actionController = require('../controllers/actionController');
 const verificationMiddleware = require('../middleware/verification');

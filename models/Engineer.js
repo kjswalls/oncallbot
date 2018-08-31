@@ -6,6 +6,7 @@ mongoose.Promise = global.Promise;
 const engineerSchema = new Schema({
   name: {
     type: String,
+    unique: true,
     required: 'Please supply a name',
     trim: true
   },

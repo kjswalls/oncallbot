@@ -1,7 +1,14 @@
-// const { getReleasesAsOptions } = require('../models/Release');
+const mongoose = require('mongoose');
+const releases = require('../handlers/releaseMethods');
+
+const Release = mongoose.model('Release');
+
+
 
 exports.oncall = async (req, res) => {
   const slackReq = req.body;
+  const releaseOptions = await releases.getReleasesAsOptions();
+  console.log(releases);
 
   const response = {
     response_type: 'in_channel',
@@ -18,7 +25,7 @@ exports.oncall = async (req, res) => {
           name: 'release_select_menu',
           text: 'Choose a release...',
           type: 'select',
-          // options: getReleasesAsOptions(),
+          options: releaseOptions,
         }],
       },
       {

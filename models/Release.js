@@ -1,15 +1,3 @@
-// const releases = [
-//   { name: '18.9.1', date: '09/01/18' },
-//   { name: '18.9.2', date: '09/15/18' },
-//   { name: '18.10.1', date: '10/01/18' },
-// ];
-
-// exports.getReleasesAsOptions = () => {
-//   return releases.map(release => ({ text: release.name, value: release.name }));
-// };
-
-// exports.getReleases = () => releases;
-
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
@@ -18,11 +6,13 @@ mongoose.Promise = global.Promise;
 const releaseSchema = new Schema({
   name: {
     type: String,
+    unique: true,
     required: 'Please supply a name',
     trim: true
   },
   date: {
     type: Date,
+    required: 'Please supply a date',
     default: Date.now
   }
 });
