@@ -25,9 +25,11 @@ exports.handleActions = async (req, res) => {
     case 'release_selection': // release selected to view from initial menu
       res.send('');
       const releaseId = slackReq.actions[0].selected_options[0].value;
-      const channelId = slackReq.channel.id;
+      const release = await releases.getReleaseById(releaseId);
       const responseUrl = slackReq.response_url;
-      response = await releases.showRelease(releaseId, channelId, responseUrl);
+      const title = `You chose the ${release.name} release.`;
+
+      response = await releases.showRelease(releaseId, responseUrl, title);
       return response;
 
     case 'add_release': // "Add Release" button pressed
@@ -63,7 +65,7 @@ exports.handleActions = async (req, res) => {
       const releaseButtonPressed = slackReq.actions[0].value;
       if (releaseButtonPressed === 'assign_engineer_to_release') {
         res.send('');
-        response = await releases.renderAssignEngineerModal(slackReq);
+        response = await engineers.renderAssignEngineerModal(slackReq);
         return response;
       }
       if (releaseButtonPressed === 'remove_engineer_from_release') {
