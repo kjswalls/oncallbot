@@ -24,22 +24,16 @@ exports.handleActions = async (req, res) => {
   switch(callbackId) {
     case 'release_selection': // release selected to view from initial menu
       res.send('');
-      response = await releases.showRelease(slackReq);
+      const releaseId = slackReq.actions[0].selected_options[0].value;
+      const channelId = slackReq.channel.id;
+      const responseUrl = slackReq.response_url;
+      response = await releases.showRelease(releaseId, channelId, responseUrl);
       return response;
 
-    case 'add_release_or_engineer': // either of two buttons "Add Release" or "Add Engineer" pressed
-      const buttonPressed = slackReq.actions[0].value;
-      if (buttonPressed === 'add_engineer') {
-        res.send('');
-        response = await engineers.renderAddEngineerModal(slackReq);
-        return response;
-      }
-      if (buttonPressed === 'add_release') {
-        res.send('');
-        response = await releases.renderAddReleaseModal(slackReq);
-        return response;;
-      }
-      break;
+    case 'add_release': // "Add Release" button pressed
+      res.send('');
+      response = await releases.renderAddReleaseModal(slackReq);
+      return response;;
     
     case 'add_engineer_form': // "Add Engineer" form submitted
       res.send('');
@@ -51,32 +45,40 @@ exports.handleActions = async (req, res) => {
       response = await releases.addRelease(slackReq);
       return response;
 
+    case 'edit_release_or_add_engineer':
+      const editButtonPressed = slackReq.actions[0].value;
+      if (editButtonPressed === 'edit_release') {
+        res.send('');
+        response = await releases.renderEditReleaseModal(slackReq);
+        return response;
+      }
+      if (editButtonPressed === 'add_engineer') {
+        res.send('');
+        response = await engineers.renderAddEngineerModal(slackReq);
+        return response;
+      }
+      break;
+
+    case 'assign_or_remove_engineer': // buttons for adding or removing an engineer from a release
+      const releaseButtonPressed = slackReq.actions[0].value;
+      if (releaseButtonPressed === 'assign_engineer_to_release') {
+        res.send('');
+        response = await releases.renderAssignEngineerModal(slackReq);
+        return response;
+      }
+      if (releaseButtonPressed === 'remove_engineer_from_release') {
+        res.send('');
+        response = await releases.renderRemoveEngineerFromReleaseModal(slackReq);
+        return response;
+      }
+      break;
+    
+    case 'assign_engineer_to_release_form': // form submitted for adding an engineer to a release
+      res.send('');
+      response = await releases.assignEngineerToRelease(slackReq);
+      return response;
+
   }
-
-  // if (slackReq.callback_id === 'release_selection') {
-  //   response = handleReleaseSelection(slackReq);
-  // } else if (slackReq.callback_id === 'add_release_or_engineer') {
-  //   const buttonPressed = slackReq.actions[0].value;
-  //   if (buttonPressed === 'add_engineer') {
-  //     res.send('');
-  //     const data = await renderAddEngineerModal(slackReq);
-  //     return data;
-  //   }
-
-  //   if (buttonPressed === 'add_release') {
-  //     res.send('');
-  //     const data = await renderAddReleaseModal(slackReq);
-  //     return data;
-  //   }
-  // } else if (slackReq.callback_id === 'add_engineer_form') {
-  //   res.send('');
-  //   const data = await addEngineer(slackReq);
-  //   return data;
-  // } else if (slackReq.callback_id === 'add_release_form') {
-  //   res.send('');
-  //   const data = await addRelease(slackReq);
-  //   return data;
-  // }
 
   return res.json(response);
 };

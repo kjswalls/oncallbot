@@ -3,9 +3,11 @@ const utils = require('./utils');
 const engineers = require('./engineerMethods');
 
 const Release = mongoose.model('Release');
+const Engineer = mongoose.model('Engineer');
 
 const getRelease = async (releaseId) => {
-  const release = Release.findOne({ _id: releaseId });
+  const release = await Release.findOne({ _id: releaseId })
+    .populate('primaryEngineers backupEngineers');
   return release;
 };
 
@@ -14,66 +16,100 @@ exports.getReleasesAsOptions = async (limit = 5) => {
     .find()
     .limit(limit)
     .sort({ date: 'desc' });
-  // if (!releases) return [];
 
   const options = releases
     .map((release) => {
       return {
         text: release.name,
-        value: release.id
+        value: release._id
       };
   });
   
   return options;
 };
 
-exports.showRelease = async (slackReq) => {
-  const releaseId = slackReq.actions[0].selected_options[0].value;
+exports.showRelease = async (releaseId, channelId, responseUrl) => {
+  // const releaseId = slackReq.actions[0].selected_options[0].value;
   const release = await getRelease(releaseId);
 
-  const primaryEngineers = await engineers.getPrimaryEngineers(releaseId);
+  const primaryEngineers = release.primaryEngineers.map(engineer => engineer.name);
+  const backupEngineers = release.backupEngineers.map(engineer => engineer.name);
   console.log('engineers on call: ', primaryEngineers);
-  const backupEngineers = await engineers.getBackupEngineers(releaseId);
   console.log('engineers on backup: ', backupEngineers);
-  // const text = `
-  //   You chose the ${release.name} release.\n
-  //   On call: ${primaryEngineers.length ? primaryEngineers.join(', ') : 'None'}\n
-  //   Backup: ${backupEngineers.length ? backupEngineers.join(', ') : 'None'}
-  // `;
 
   const message = {
     response_type: 'in_channel',
-    channel: slackReq.channel.id,
+    channel: channelId,
     attachments: [
       {
-          fallback: `Release ${release.name} and associated engineers`,
-          color: "#36a64f",
-          pretext: `You chose the ${release.name} release.`,
-          title: release.name,
-          text: `Go-live date: ${release.date}\n`,
-          fields: [
-              {
-                  title: 'On call:',
-                  value: `${primaryEngineers.length ? primaryEngineers.join(', ') : 'None'}\n`,
-                  "short": false
-              },
-              {
-                title: 'Backup:',
-                value: `${backupEngineers.length ? backupEngineers.join(', ') : 'None'}`,
+        fallback: `Release ${release.name} and associated engineers`,
+        color: 'good',
+        pretext: `You chose the ${release.name} release.`,
+        title: release.name,
+        text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US')}\n`,
+        fields: [
+            {
+                title: 'On call:',
+                value: `${primaryEngineers.length ? primaryEngineers.join(', ') : 'None'}\n`,
                 "short": false
             },
-          ],
-      }
-  ]
+            {
+              title: 'Backup:',
+              value: `${backupEngineers.length ? backupEngineers.join(', ') : 'None'}`,
+              "short": false
+          },
+        ],
+      },
+      {
+        text: '',
+        fallback: 'You are unable to add or remove engineers',
+        color: '#E8E8E8',
+        attachment_type: 'default',
+        callback_id: 'assign_or_remove_engineer',
+        actions: [
+          {
+            name: 'assign_engineer_button',
+            text: 'Assign engineer',
+            type: 'button',
+            value: 'assign_engineer_to_release',
+          },
+          {
+            name: 'remove_engineer_button',
+            text: 'Remove engineer',
+            type: 'button',
+            value: 'remove_engineer_from_release',
+          },
+        ],
+      },
+      {
+        text: '',
+        fallback: 'You are unable to edit this release or add an engineer',
+        color: '#E8E8E8',
+        attachment_type: 'default',
+        callback_id: 'edit_release_or_add_engineer',
+        actions: [
+          {
+            name: 'edit_release_button',
+            text: 'Edit release info',
+            type: 'button',
+            value: 'edit_release',
+          },
+          {
+            name: 'add_engineer_button',
+            text: 'Add an engineer to the pool',
+            type: 'button',
+            value: 'add_engineer',
+          },
+        ],
+      },
+    ]
   };
 
-  const slackResponse = utils.sendToSlack(slackReq.response_url, message);
+  const slackResponse = await utils.postToSlack(responseUrl, message);
   return slackResponse;
 };
 
 exports.renderAddReleaseModal = async (slackReq) => {
-  // const engineerOptions = await getEngineersAsOptions();
-  // console.log(engineerOptions);
   const dialog = {
     trigger_id: slackReq.trigger_id,
     dialog: {
@@ -99,25 +135,14 @@ exports.renderAddReleaseModal = async (slackReq) => {
     },
   };
 
-  const slackResponse = utils.sendToSlack('https://slack.com/api/dialog.open', dialog);
+  const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
-
-  // const response = await fetch('https://slack.com/api/dialog.open', {
-  //   method: 'POST',
-  //   body: JSON.stringify(dialog),
-  //   headers: {
-  //     'Content-Type': 'application/json; charset=utf-8',
-  //     'Authorization': `Bearer ${process.env.SLACK_ACCESS_TOKEN}`
-  //   },
-  // });
-
-  // const data = await response.json();
-  // return data;
 };
 
 exports.addRelease = async (slackReq) => {
   const formData = slackReq.submission;
   const release = await (new Release(formData).save());
+  const releaseOptions = await exports.getReleasesAsOptions();
 
   const message = {
     response_type: 'in_channel',
@@ -127,22 +152,22 @@ exports.addRelease = async (slackReq) => {
       {
         text: 'Choose a release to view',
         fallback: 'You are unable to choose a release',
-        color: '#2c963f',
+        color: 'good',
         attachment_type: 'default',
         callback_id: 'release_selection',
         actions: [{
           name: 'release_select_menu',
           text: 'Choose a release...',
           type: 'select',
-          options: exports.getReleasesAsOptions(),
+          options: releaseOptions,
         }],
       },
       {
         text: '',
-        fallback: 'You are unable to add a release or an engineer',
-        color: '#2c963f',
+        fallback: 'You are unable to add a release',
+        color: 'good',
         attachment_type: 'default',
-        callback_id: 'add_release_or_engineer',
+        callback_id: 'add_release',
         actions: [
           {
             name: 'add_release_button',
@@ -150,39 +175,82 @@ exports.addRelease = async (slackReq) => {
             type: 'button',
             value: 'add_release',
           },
-          {
-            name: 'add_engineer_button',
-            text: 'Add an engineer to the pool',
-            type: 'button',
-            value: 'add_engineer',
-          },
         ],
       }
     ],
   };
 
-  const slackResponse = utils.sendToSlack(slackReq.response_url, message);
+  const slackResponse = utils.postToSlack(slackReq.response_url, message);
   return slackResponse;
+};
 
-  // const response = await fetch(slackReq.response_url, {
-  //   method: 'POST',
-  //   body: JSON.stringify(message),
-  //   headers: {
-  //     'Content-Type': 'application/json; charset=utf-8',
-  //     'Authorization': `Bearer ${process.env.SLACK_ACCESS_TOKEN}`
-  //   },
-  // });
-  // const data = await response.json();
-  // {
-  //   type: 'select',
-  //   label: 'Back End',
-  //   name: 'back_end_primary',
-  //   options: engineerOptions.backEnd,
-  // },
-  // {
-  //   type: 'select',
-  //   label: 'Front End',
-  //   name: 'front_end_primary',
-  //   options: engineerOptions.frontEnd,
-  // },
-}
+exports.renderAssignEngineerModal = async (slackReq) => {
+  const releaseName = slackReq.original_message.attachments[0].title;
+  const engineerOptions = await engineers.getEngineersAsOptions();
+  const engineerOptionGroups = [
+    {
+      "label": "Front End",
+      "options": engineerOptions.frontEnd,
+    },
+    {
+      "label": "Back End",
+      "options": engineerOptions.backEnd,
+    }
+  ];
+
+  const dialog = {
+    trigger_id: slackReq.trigger_id,
+    dialog: {
+      callback_id: 'assign_engineer_to_release_form',
+      title: `Assign to ${releaseName}`,
+      submit_label: 'Assign',
+      state: releaseName,
+      elements: [
+        {
+          label: 'Name',
+          name: "id",
+          type: "select",
+          option_groups: engineerOptionGroups,
+        },
+        {
+          type: 'select',
+          label: 'On Call or Backup',
+          name: 'primary_or_backup',
+          options: [
+            {
+              label: 'On Call',
+              value: 'primary',
+            },
+            {
+              label: 'Backup',
+              value: 'backup',
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+  return slackResponse;
+};
+
+exports.assignEngineerToRelease = async (slackReq) => {
+  const releaseName = slackReq.state;
+  const id = slackReq.submission.id;
+  const engineer = await Engineer.findOne({ _id: id });
+  const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
+
+  const updatedRelease = {
+    [fieldName]: engineer._id,
+  };
+  const release = await Release.findOneAndUpdate({ name: releaseName }, { $push: updatedRelease }, { new: true }).exec();
+
+  console.log('updated release ', release);
+  console.log('slackReq', slackReq);
+
+  const releaseId = release._id;
+  const channelId = slackReq.channel.id;
+
+  exports.showRelease(releaseId, channelId, slackReq.response_url);
+};

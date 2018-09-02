@@ -10,6 +10,12 @@ const engineerSchema = new Schema({
     required: 'Please supply a name',
     trim: true
   },
+  slackId: {
+    type: String,
+    unique: true,
+    required: 'Please supply a slack ID',
+    trim: true
+  },
   discipline: {
     type: String,
     required: 'Please supply a discipline',
@@ -36,12 +42,13 @@ engineerSchema.virtual('releaseBackup', {
 
 // populate engineer field on release schema
 function autopopulate(next) {
-  this.populate('releases');
+  this.populate('releasePrimary');
+  this.populate('releaseBackup');
   next();
 }
 
 // autopopulate engineer info whenever we search for a release
-engineerSchema.pre('find', autopopulate);
-engineerSchema.pre('findOne', autopopulate);
+// engineerSchema.pre('find', autopopulate);
+// engineerSchema.pre('findOne', autopopulate);
 
 module.exports = mongoose.model('Engineer', engineerSchema);

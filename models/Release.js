@@ -14,20 +14,22 @@ const releaseSchema = new Schema({
     type: Date,
     required: 'Please supply a date',
     default: Date.now
-  }
+  },
+  primaryEngineers: [{ type: mongoose.Schema.ObjectId, ref: 'Engineer' }],
+  backupEngineers: [{ type: mongoose.Schema.ObjectId, ref: 'Engineer' }]
 });
 
-releaseSchema.virtual('primaryEngineers', {
-  ref: 'Engineer',
-  localField: '_id',
-  foreignField: 'releasePrimary'
-});
+// releaseSchema.virtual('primaryEngineers', {
+//   ref: 'Engineer',
+//   localField: '_id',
+//   foreignField: 'releasePrimary'
+// });
 
-releaseSchema.virtual('backupEngineers', {
-  ref: 'Engineer',
-  localField: '_id',
-  foreignField: 'releaseBackup'
-});
+// releaseSchema.virtual('backupEngineers', {
+//   ref: 'Engineer',
+//   localField: '_id',
+//   foreignField: 'releaseBackup'
+// });
 
 // populate engineer fields on release schema
 function autopopulate(next) {

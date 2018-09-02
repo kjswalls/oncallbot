@@ -8,7 +8,16 @@ exports.log = (() => {
   return logger;
 })();
 
-exports.sendToSlack = async (url, body) => {
+exports.getFromSlack = async (url) => {
+  const response = await fetch(url, {
+    method: 'GET',
+  });
+  
+  const data = await response.json();
+  return data;
+}
+
+exports.postToSlack = async (url, body, textResponse = false) => {
   const response = await fetch(url, {
     method: 'POST',
     body: JSON.stringify(body),
@@ -18,6 +27,6 @@ exports.sendToSlack = async (url, body) => {
     },
   });
 
-  const data = await response.json();
+  const data = textResponse ? response : await response.json();
   return data;
 };
