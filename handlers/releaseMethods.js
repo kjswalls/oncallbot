@@ -38,9 +38,7 @@ exports.getReleasesAsOptions = async (limit = 5) => {
 };
 
 exports.showRelease = async (releaseId, responseUrl, title) => {
-  // const releaseId = slackReq.actions[0].selected_options[0].value;
   const release = await exports.getReleaseById(releaseId);
-  // const title = `You chose the ${release.name} release.`;
 
   const primaryEngineers = release.primaryEngineers.map(engineer => engineer.name);
   const backupEngineers = release.backupEngineers.map(engineer => engineer.name);
@@ -58,6 +56,31 @@ exports.renderAddReleaseModal = async (slackReq) => {
 
   const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
+};
+
+exports.renderEditReleaseModal = async (slackReq) => {
+  console.log('edit release', slackReq);
+  const releaseName = slackReq.original_message.attachments[0].title;
+  const release = await exports.getReleaseByName(releaseName);
+  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' });
+
+  const dialog = messages.editReleaseModal(slackReq.trigger_id, releaseName, releaseDate, release._id);
+
+  const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+  return slackResponse;
+};
+
+exports.editRelease = async (slackReq) => {
+  const formData = slackReq.submission;
+  const releaseId = slackReq.state;
+  const title = `Release *${slackReq.submission.name}* updated :point_up:`;
+  const updatedRelease = await Release.findOneAndUpdate(
+    { _id: releaseId },
+    formData,
+    { new: true }
+  );
+
+  exports.showRelease(updatedRelease._id, slackReq.response_url, title);
 };
 
 exports.addRelease = async (slackReq) => {
@@ -87,5 +110,31 @@ exports.assignEngineerToRelease = async (slackReq) => {
   console.log('updated release ', release);
   console.log('slackReq', slackReq);
 
+  exports.showRelease(release._id, slackReq.response_url, title);
+};
+
+exports.removeEngineerFromRelease = async (slackReq) => {
+  const releaseName = slackReq.state;
+  const { primary, backup } = slackReq.submission;
+  const namesRemoved = [];
+  let primaryEngineer = null;
+  let backupEngineer = null;
+
+  if (primary) {
+    primaryEngineer = await Engineer.findOne({ _id: primary });
+    namesRemoved.push(primaryEngineer.name)
+  };
+  if (backup) {
+    backupEngineer = await Engineer.findOne({ _id: backup });
+    namesRemoved.push(backupEngineer.name)
+  };
+
+  const release = await Release.findOneAndUpdate(
+    { name: releaseName },
+    { $pull: { primaryEngineers: primary, backupEngineers: backup }},
+    { new: true }
+  );
+
+  const title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;
   exports.showRelease(release._id, slackReq.response_url, title);
 };

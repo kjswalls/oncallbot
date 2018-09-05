@@ -74,12 +74,6 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, title) => 
             type: 'button',
             value: 'assign_engineer_to_release',
           },
-          {
-            name: 'remove_engineer_button',
-            text: 'Remove engineer',
-            type: 'button',
-            value: 'remove_engineer_from_release',
-          },
         ],
       },
       {
@@ -106,6 +100,16 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, title) => 
     ]
   };
 
+  // if there are engineers assigned to the release, show the 'Remove Engineers' button
+  if (primaryEngineers.length || backupEngineers.length) {
+    message.attachments[1].actions.push({
+      name: 'remove_engineer_button',
+      text: 'Remove engineer',
+      type: 'button',
+      value: 'remove_engineer_from_release',
+    },);
+  }
+
   return message;
 };
 
@@ -129,6 +133,38 @@ exports.addReleaseModal = (triggerId) => {
           name: 'date',
           placeholder: 'M/D/YY',
           max_length: 8,
+          hint: 'The day the release goes live',
+        },
+      ],
+    },
+  };
+
+  return dialog;
+};
+
+exports.editReleaseModal = (triggerId, releaseName, releaseDate, releaseId) => {
+  const dialog = {
+    trigger_id: triggerId,
+    dialog: {
+      callback_id: 'edit_release_form',
+      title: `Edit ${releaseName}`,
+      submit_label: 'Save',
+      state: releaseId,
+      elements: [
+        {
+          type: 'text',
+          label: 'Name',
+          name: 'name',
+          value: releaseName,
+          placeholder: 'e.g. 18.10.1',
+        },
+        {
+          type: 'text',
+          label: 'Date',
+          name: 'date',
+          placeholder: 'M/D/YY',
+          max_length: 8,
+          value: releaseDate,
           hint: 'The day the release goes live',
         },
       ],
@@ -223,6 +259,40 @@ exports.addEngineerModal = (triggerId, releaseName) => {
       ],
     },
   };
+
+  return dialog;
+};
+
+exports.removeEngineerModal = (triggerId, releaseName, primaryEngineers, backupEngineers) => {
+  const dialog = {
+    trigger_id: triggerId,
+    dialog: {
+      callback_id: 'remove_engineer_from_release_form',
+      title: `Remove from ${releaseName}`,
+      submit_label: 'Remove',
+      state: releaseName,
+      elements: [],
+    },
+  };
+
+  if (primaryEngineers.length) {
+    dialog.dialog.elements.push({
+      label: 'On Call',
+      name: "primary",
+      type: "select",
+      optional: true,
+      options: primaryEngineers,
+    });
+  }
+  if (backupEngineers.length) {
+    dialog.dialog.elements.push({
+      label: 'Backup',
+      name: "backup",
+      type: "select",
+      optional: true,
+      options: backupEngineers,
+    },);
+  }
 
   return dialog;
 };

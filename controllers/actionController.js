@@ -27,7 +27,7 @@ exports.handleActions = async (req, res) => {
       const releaseId = slackReq.actions[0].selected_options[0].value;
       const release = await releases.getReleaseById(releaseId);
       const responseUrl = slackReq.response_url;
-      const title = `You chose the ${release.name} release.`;
+      const title = `You chose the *${release.name}* release.`;
 
       response = await releases.showRelease(releaseId, responseUrl, title);
       return response;
@@ -70,7 +70,7 @@ exports.handleActions = async (req, res) => {
       }
       if (releaseButtonPressed === 'remove_engineer_from_release') {
         res.send('');
-        response = await releases.renderRemoveEngineerFromReleaseModal(slackReq);
+        response = await engineers.renderRemoveEngineerModal(slackReq);
         return response;
       }
       break;
@@ -78,6 +78,16 @@ exports.handleActions = async (req, res) => {
     case 'assign_engineer_to_release_form': // form submitted for adding an engineer to a release
       res.send('');
       response = await releases.assignEngineerToRelease(slackReq);
+      return response;
+
+    case 'remove_engineer_from_release_form':
+      res.send('');
+      response = await releases.removeEngineerFromRelease(slackReq);
+      return response;
+
+    case 'edit_release_form':
+      res.send('');
+      response = await releases.editRelease(slackReq);
       return response;
 
   }

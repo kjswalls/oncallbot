@@ -5,8 +5,6 @@ const messages = require('../handlers/messages');
 
 const Release = mongoose.model('Release');
 
-
-
 exports.oncall = async (req, res) => {
   res.send('');
   const slackReq = req.body;

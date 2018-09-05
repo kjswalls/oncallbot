@@ -84,3 +84,25 @@ exports.renderAddEngineerModal = async (slackReq) => {
   const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
 };
+
+exports.renderRemoveEngineerModal = async(slackReq) => {
+  // find the release and get engineers assigned to it
+  const releaseName = slackReq.original_message.attachments[0].title;
+  const release = await releases.getReleaseByName(releaseName);
+
+  const primaryEngineers = release.primaryEngineers.map((engineer) => {
+    return { label: engineer.name, value: engineer.id }
+  });
+  const backupEngineers = release.backupEngineers.map((engineer) => {
+    return { label: engineer.name, value: engineer.id }
+  });
+
+  // pass them to messages to populate a dialog
+  const dialog = messages.removeEngineerModal(slackReq.trigger_id, releaseName, primaryEngineers, backupEngineers);
+
+  // send the dialog to slack
+  const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+
+  // return response (is this even necessary?)
+  return slackResponse;
+};
