@@ -1,0 +1,6 @@
+Add validation to all forms (you can the same engineer multiple times to a release)
+Add logic for assigning engineers automatically on a rotation
+Add routes/logic for accepting commands instead of using the UI
+Add automatic reminders to on call engineers
+Find out if we really need to return slackResponse all the time inside releaseMethods and engineerMethods
+Find out if we really need awaits on all the calls in actionController
