@@ -6,6 +6,34 @@ const engineers = require('./engineerMethods');
 const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
 
+const validateReleaseInfo = (formData) => {
+  const name = formData.name;
+  const date = formData.date;
+  const errors = [];
+
+  // validate name format
+  const nameRegEx = RegExp('(\d\d.\d{1,2}.\d{1})', 'g');
+  if (!nameRegEx.test(name)) {
+    errors.push({
+      name: 'name',
+      error: 'Sorry, the name must be formatted like: 18.9.1'
+    });
+  }
+
+  // validate date format
+  const dateObj = new Date(date);
+  const isValidDate = dateObj.getTime() === dateObj.getTime(); // An invalid date object returns NaN for getTime() and NaN is the only
+  // object not strictly equal to itself.
+  if (!isValidDate) {
+    errors.push({
+      name: 'date',
+      error: 'Sorry, that wasn\'t a valid date'
+    });
+  }
+
+  return errors;
+};
+
 exports.getReleaseById = async (releaseId) => {
   const release = await Release.findOne({ _id: releaseId })
     .populate('primaryEngineers backupEngineers');
@@ -54,7 +82,7 @@ exports.showRelease = async (releaseId, responseUrl, title) => {
 exports.renderAddReleaseModal = async (slackReq) => {
   const dialog = messages.addReleaseModal(slackReq.trigger_id);
 
-  const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+  const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
 };
 
@@ -66,7 +94,7 @@ exports.renderEditReleaseModal = async (slackReq) => {
 
   const dialog = messages.editReleaseModal(slackReq.trigger_id, releaseName, releaseDate, release._id);
 
-  const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+  const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
 };
 
@@ -85,13 +113,24 @@ exports.editRelease = async (slackReq) => {
 
 exports.addRelease = async (slackReq) => {
   const formData = slackReq.submission;
+
+  // validate form data
+  const errors = {
+    errors: validateReleaseInfo(formData)
+  };
+
+  if (errors.errors.length) {
+    const errorResponse = await utils.postToSlack(slackReq.response_url, errors);
+    return errorResponse;
+  }
+
   const release = await (new Release(formData).save());
   const releaseOptions = await exports.getReleasesAsOptions();
   const title = `Release *${formData.name}* added for *${formData.date}* :ok_hand:`;
 
   const message = messages.selectRelease(releaseOptions, title);
 
-  const slackResponse = utils.postToSlack(slackReq.response_url, message);
+  const slackResponse = await utils.postToSlack(slackReq.response_url, message);
   return slackResponse;
 };
 

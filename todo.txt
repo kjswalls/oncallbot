@@ -4,3 +4,4 @@ Add routes/logic for accepting commands instead of using the UI
 Add automatic reminders to on call engineers
 Find out if we really need to return slackResponse all the time inside releaseMethods and engineerMethods
 Find out if we really need awaits on all the calls in actionController
+Add help command

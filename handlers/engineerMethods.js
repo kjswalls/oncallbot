@@ -81,7 +81,7 @@ exports.renderAddEngineerModal = async (slackReq) => {
 
   const dialog = messages.addEngineerModal(triggerId, releaseName);
 
-  const slackResponse = utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+  const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
 };
 
