@@ -12,6 +12,7 @@ exports.handleActions = async (req, res) => {
     channel: slackReq.channel.id,
     text: 'Oops, something went wrong',
   };
+  let errors = null;
 
   /**
    * Different callback IDs correspond to different inputs from Slack.
@@ -43,6 +44,15 @@ exports.handleActions = async (req, res) => {
       return response;
     
     case 'add_release_form': // "Add Release" form submitted
+      // validate form data
+      errors = {
+        errors: releases.validateReleaseInfo(slackReq.submission)
+      };
+
+      if (errors.errors.length) {
+        return res.json(errors);
+      }
+
       res.send('');
       response = await releases.addRelease(slackReq);
       return response;
@@ -86,6 +96,15 @@ exports.handleActions = async (req, res) => {
       return response;
 
     case 'edit_release_form':
+      // validate form data
+      errors = {
+        errors: releases.validateReleaseInfo(slackReq.submission)
+      };
+
+      if (errors.errors.length) {
+        return res.json(errors);
+      }
+
       res.send('');
       response = await releases.editRelease(slackReq);
       return response;
