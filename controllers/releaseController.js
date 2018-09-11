@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const utils = require('./utils');
-const messages = require('./messages');
-const engineers = require('./engineerMethods');
+const utils = require('../handlers/utils');
+const messages = require('../handlers/messages');
+const engineers = require('./engineerController');
 
 const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
@@ -22,6 +22,7 @@ exports.validateReleaseInfo = (formData) => {
 
   // validate date format
   // this regex tries to match flexible date formats. m/d/yy, m/d/yyyy, mm/dd/yy, mm/dd/yyyy
+  // it doesn't account for fake dates like 2/31/19 though :(
   const dateRegEx = /^([1-9]|0[1-9]|1[012])[- /.]([1-9]|0[1-9]|[12][0-9]|3[01])[- /.]((19|20)\d\d|\d\d)$/;
   if (!dateRegEx.test(date)) {
     errors.push({
@@ -66,13 +67,12 @@ exports.getReleasesAsOptions = async (limit = 5) => {
 
 exports.showRelease = async (releaseId, responseUrl, title) => {
   const release = await exports.getReleaseById(releaseId);
-
   const primaryEngineers = release.primaryEngineers.map(engineer => engineer.name);
   const backupEngineers = release.backupEngineers.map(engineer => engineer.name);
-  console.log('engineers on call: ', primaryEngineers);
-  console.log('engineers on backup: ', backupEngineers);
+  const engineerOptions = await engineers.getEngineersAsOptions();
+  const remainingEngineers = engineers.getEngineersLeftInPool(release, engineerOptions);
 
-  const message = messages.displayRelease(release, primaryEngineers, backupEngineers, title);
+  const message = messages.displayRelease(release, primaryEngineers, backupEngineers, remainingEngineers, title);
 
   const slackResponse = await utils.postToSlack(responseUrl, message);
   return slackResponse;
@@ -125,20 +125,47 @@ exports.addRelease = async (slackReq) => {
   return slackResponse;
 };
 
+// exports.validateAssignEngineer = async (slackReq) => {
+//   // check to see if the engineer is already on call or backup
+//   console.log('from validate: ', slackReq);
+//   const releaseName = slackReq.state;
+//   const id = slackReq.submission.id;
+//   const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
+
+//   const release = await Release.findOne({ [fieldName]: { $in: id }}).populate(fieldName);
+//   const errors = [];
+
+//   if (release && release[fieldName].length) {
+//     errors.push({
+//       name: 'name',
+//       error: 'Sorry, that person is already assigned to this release'
+//     });
+//   }
+
+//   return errors;
+// };
+
 exports.assignEngineerToRelease = async (slackReq) => {
   const releaseName = slackReq.state;
   const id = slackReq.submission.id;
   const engineer = await Engineer.findOne({ _id: id });
   const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
+
+  // const errors = {
+  //   errors: await exports.validateAssignEngineer(releaseName, id, fieldName),
+  // };
+
+  // if (errors.errors.length) {
+  //   const slackResponse = await utils.postToSlack(slackReq.response_url, errors, true);
+  //   return slackResponse;
+  // }
+
   const title = `You assigned *${engineer.name}* to ${releaseName} :call_me_hand:`;
 
   const updatedRelease = {
     [fieldName]: engineer._id,
   };
   const release = await Release.findOneAndUpdate({ name: releaseName }, { $push: updatedRelease }, { new: true }).exec();
-
-  console.log('updated release ', release);
-  console.log('slackReq', slackReq);
 
   exports.showRelease(release._id, slackReq.response_url, title);
 };

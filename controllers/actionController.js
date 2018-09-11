@@ -1,5 +1,5 @@
-const releases = require('../handlers/releaseMethods');
-const engineers = require('../handlers/engineerMethods');
+const releases = require('./releaseController');
+const engineers = require('./engineerController');
 
 
 exports.handleActions = async (req, res) => {
@@ -86,6 +86,15 @@ exports.handleActions = async (req, res) => {
       break;
     
     case 'assign_engineer_to_release_form': // form submitted for adding an engineer to a release
+      // validate form data
+      // errors = {
+      //   errors: await releases.validateAssignEngineer(slackReq),
+      // }
+
+      // if (errors.errors.length) {
+      //   return res.json(errors);
+      // }
+
       res.send('');
       response = await releases.assignEngineerToRelease(slackReq);
       return response;
@@ -98,7 +107,7 @@ exports.handleActions = async (req, res) => {
     case 'edit_release_form':
       // validate form data
       errors = {
-        errors: releases.validateReleaseInfo(slackReq.submission)
+        errors: releases.validateReleaseInfo(slackReq.submission),
       };
 
       if (errors.errors.length) {

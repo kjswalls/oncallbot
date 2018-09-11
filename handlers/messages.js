@@ -37,7 +37,7 @@ exports.selectRelease = (releaseOptions, title) => {
   return message;
 };
 
-exports.displayRelease = (release, primaryEngineers, backupEngineers, title) => {
+exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingEngineers, title) => {
   const message = {
     response_type: 'in_channel',
     // channel: channelId,
@@ -67,14 +67,7 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, title) => 
         color: '#E8E8E8',
         attachment_type: 'default',
         callback_id: 'assign_or_remove_engineer',
-        actions: [
-          {
-            name: 'assign_engineer_button',
-            text: 'Assign engineer',
-            type: 'button',
-            value: 'assign_engineer_to_release',
-          },
-        ],
+        actions: [],
       },
       {
         text: '',
@@ -100,7 +93,17 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, title) => 
     ]
   };
 
-  // if there are engineers assigned to the release, show the 'Remove Engineers' button
+  // if there are engineers left in the pool, show the 'Assign Engineer' button
+  if (remainingEngineers.frontEnd.length || remainingEngineers.backEnd.length) {
+    message.attachments[1].actions.push({
+      name: 'assign_engineer_button',
+      text: 'Assign engineer',
+      type: 'button',
+      value: 'assign_engineer_to_release',
+    },);
+  }
+
+  // if there are engineers assigned to the release, show the 'Remove Engineer' button
   if (primaryEngineers.length || backupEngineers.length) {
     message.attachments[1].actions.push({
       name: 'remove_engineer_button',
@@ -174,7 +177,47 @@ exports.editReleaseModal = (triggerId, releaseName, releaseDate, releaseId) => {
   return dialog;
 };
 
-exports.assignEngineerModal = (triggerId, releaseName, engineerOptionGroups) => {
+exports.assignEngineerModal = (triggerId, releaseName, frontEndUnique, backEndUnique) => {
+  let optionLabel = 'option_groups';
+  let options = [];
+
+  // if there are frontends to display but no backends
+  if (frontEndUnique.length && !backEndUnique.length) {
+    // options = frontEndUnique;
+    options = [
+      {
+        "label": "Front End",
+        "options": frontEndUnique,
+      },
+    ];
+  }
+
+  // if there are backends to display but no frontends
+  if (!frontEndUnique.length && backEndUnique.length) {
+    // options = backEndUnique;
+    options = [
+      {
+        "label": "Back End",
+        "options": backEndUnique,
+      },
+    ];
+  }
+
+  // if there are both frontends and backends to display
+  if (frontEndUnique.length && backEndUnique.length) {
+    // optionLabel = 'option_groups';
+    options = [
+      {
+        "label": "Front End",
+        "options": frontEndUnique,
+      },
+      {
+        "label": "Back End",
+        "options": backEndUnique,
+      }
+    ];
+  }
+
   const dialog = {
     trigger_id: triggerId,
     dialog: {
@@ -187,7 +230,7 @@ exports.assignEngineerModal = (triggerId, releaseName, engineerOptionGroups) => 
           label: 'Name',
           name: "id",
           type: "select",
-          option_groups: engineerOptionGroups,
+          [optionLabel]: options,
         },
         {
           type: 'select',

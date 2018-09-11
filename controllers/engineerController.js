@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const utils = require('./utils');
-const messages = require('./messages');
-const releases = require('./releaseMethods');
+const utils = require('../handlers/utils');
+const messages = require('../handlers/messages');
+const releases = require('./releaseController');
 
 const Engineer = mongoose.model('Engineer');
 
@@ -36,21 +36,35 @@ exports.getEngineersAsOptions = async (discipline = null) => {
   return options;
 };
 
+exports.getEngineersLeftInPool = (release, engineerOptions) => {
+  const frontEndUnique = engineerOptions.frontEnd.filter((engineerOption) => {
+    const primaryIds = release.primaryEngineers.map((engineer) => engineer.id);
+    const backupIds = release.backupEngineers.map((engineer) => engineer.id);
+    return !(primaryIds.includes(engineerOption.value) || backupIds.includes(engineerOption.value));
+  });
+
+  const backEndUnique = engineerOptions.backEnd.filter((engineerOption) => {
+    const primaryIds = release.primaryEngineers.map((engineer) => engineer.id);
+    const backupIds = release.backupEngineers.map((engineer) => engineer.id);
+    return !(primaryIds.includes(engineerOption.value) || backupIds.includes(engineerOption.value));
+  });
+
+  const remainingEngineers = {
+    backEnd: backEndUnique,
+    frontEnd: frontEndUnique,
+  };
+  return remainingEngineers;
+};
+
 exports.renderAssignEngineerModal = async (slackReq) => {
+  console.log('from render method: ', slackReq);
   const releaseName = slackReq.original_message.attachments[0].title;
   const engineerOptions = await exports.getEngineersAsOptions();
-  const engineerOptionGroups = [
-    {
-      "label": "Front End",
-      "options": engineerOptions.frontEnd,
-    },
-    {
-      "label": "Back End",
-      "options": engineerOptions.backEnd,
-    }
-  ];
+  const release = await releases.getReleaseByName(releaseName);
 
-  const dialog = messages.assignEngineerModal(slackReq.trigger_id, releaseName, engineerOptionGroups);
+  const engineersInPool = exports.getEngineersLeftInPool(release, engineerOptions);
+
+  const dialog = messages.assignEngineerModal(slackReq.trigger_id, releaseName, engineersInPool.frontEnd, engineersInPool.backEnd);
 
   const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
@@ -59,7 +73,6 @@ exports.renderAssignEngineerModal = async (slackReq) => {
 exports.addEngineer = async (slackReq) => {
   const data = await utils.getFromSlack(`https://slack.com/api/users.info?token=${process.env.SLACK_ACCESS_TOKEN}&user=${slackReq.submission.slackId}`);
 
-  console.log(data);
   const formData = {
     name: data.user.real_name,
     slackId: slackReq.submission.slackId,

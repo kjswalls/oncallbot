@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const releases = require('../handlers/releaseMethods');
+const releases = require('./releaseController');
 const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 
