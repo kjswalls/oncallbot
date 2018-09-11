@@ -7,5 +7,6 @@ Add logic for assigning engineers automatically on a rotation
 Add automatic reminders to on call engineers
 Add help command
 Make readme
+Add slack Signing Secrets verification
 Find out if we really need to return slackResponse all the time inside releaseMethods and engineerMethods
 Find out if we really need awaits on all the calls in actionController
