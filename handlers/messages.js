@@ -116,7 +116,7 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
   return message;
 };
 
-exports.addReleaseModal = (triggerId) => {
+exports.addReleaseModal = (triggerId, releaseName = null) => {
   const dialog = {
     trigger_id: triggerId,
     dialog: {
@@ -141,6 +141,10 @@ exports.addReleaseModal = (triggerId) => {
       ],
     },
   };
+
+  if (releaseName) {
+    dialog.dialog.elements[0].value = releaseName;
+  }
 
   return dialog;
 };

@@ -78,8 +78,8 @@ exports.showRelease = async (releaseId, responseUrl, title) => {
   return slackResponse;
 };
 
-exports.renderAddReleaseModal = async (slackReq) => {
-  const dialog = messages.addReleaseModal(slackReq.trigger_id);
+exports.renderAddReleaseModal = async (slackReq, releaseName = null) => {
+  const dialog = messages.addReleaseModal(slackReq.trigger_id, releaseName);
 
   const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
   return slackResponse;
