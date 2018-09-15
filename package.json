@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "now": {
+    "alias": "oncallbot",
     "dotenv": "variables.env.now"
   },
   "scripts": {

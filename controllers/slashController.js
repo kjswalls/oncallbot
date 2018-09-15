@@ -138,8 +138,11 @@ exports.oncall = async (req, res) => {
       console.log('ADD regex matched');
       // if release exists, open dialog for editing release
 
-  } else { // unknown command
+      // otherwise open dialog for adding new release
 
+  } else { // unknown command
+    res.send('Sorry, I didn\'t understand that command. Please try again!');
+    return;
   }
 };
 
