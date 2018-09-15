@@ -74,7 +74,7 @@ exports.showRelease = async (releaseId, responseUrl, title) => {
 
   const message = messages.displayRelease(release, primaryEngineers, backupEngineers, remainingEngineers, title);
 
-  const slackResponse = await utils.postToSlack(responseUrl, message);
+  const slackResponse = await utils.postToSlack(responseUrl, message, true);
   return slackResponse;
 };
 
@@ -110,56 +110,24 @@ exports.editRelease = async (slackReq) => {
   exports.showRelease(updatedRelease._id, slackReq.response_url, title);
 };
 
-exports.addRelease = async (slackReq) => {
-  const formData = {
-    name: slackReq.submission.name,
-    date: new Date(slackReq.submission.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' })
+exports.addRelease = async (name, date, responseUrl) => {
+  const releaseData = {
+    name,
+    date: new Date(date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' })
   };
-  const release = await (new Release(formData).save());
+  const release = await (new Release(releaseData).save());
   const releaseOptions = await exports.getReleasesAsOptions();
-  const title = `Release *${formData.name}* added for *${formData.date}* :ok_hand:`;
+  const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:`;
 
-  const message = messages.selectRelease(releaseOptions, title);
-
-  const slackResponse = await utils.postToSlack(slackReq.response_url, message);
+  const slackResponse = await exports.showRelease(release.id, responseUrl, title);
   return slackResponse;
 };
-
-// exports.validateAssignEngineer = async (slackReq) => {
-//   // check to see if the engineer is already on call or backup
-//   console.log('from validate: ', slackReq);
-//   const releaseName = slackReq.state;
-//   const id = slackReq.submission.id;
-//   const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
-
-//   const release = await Release.findOne({ [fieldName]: { $in: id }}).populate(fieldName);
-//   const errors = [];
-
-//   if (release && release[fieldName].length) {
-//     errors.push({
-//       name: 'name',
-//       error: 'Sorry, that person is already assigned to this release'
-//     });
-//   }
-
-//   return errors;
-// };
 
 exports.assignEngineerToRelease = async (slackReq) => {
   const releaseName = slackReq.state;
   const id = slackReq.submission.id;
   const engineer = await Engineer.findOne({ _id: id });
   const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
-
-  // const errors = {
-  //   errors: await exports.validateAssignEngineer(releaseName, id, fieldName),
-  // };
-
-  // if (errors.errors.length) {
-  //   const slackResponse = await utils.postToSlack(slackReq.response_url, errors, true);
-  //   return slackResponse;
-  // }
-
   const title = `You assigned *${engineer.name}* to ${releaseName} :call_me_hand:`;
 
   const updatedRelease = {

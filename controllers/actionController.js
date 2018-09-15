@@ -54,7 +54,9 @@ exports.handleActions = async (req, res) => {
       }
 
       res.send('');
-      response = await releases.addRelease(slackReq);
+      const name = slackReq.submission.name;
+      const date = slackReq.submission.date;
+      response = await releases.addRelease(name, date, slackReq.response_url);
       return response;
 
     case 'edit_release_or_add_engineer':

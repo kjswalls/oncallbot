@@ -123,8 +123,8 @@ exports.oncall = async (req, res) => {
         let namesAdded = 'No new engineers';
         if (primaryEngineers || backupEngineers) {
           namesAdded = [
-            ...primaryEngineers.map(engineer => engineer.name),
-            ...backupEngineers.map(engineer => engineer.name),
+            ...primaryEngineers ? primaryEngineers.map(engineer => engineer.name) : [],
+            ...backupEngineers ? backupEngineers.map(engineer => engineer.name): [],
           ].join(', ');
         }
         const title = `*${namesAdded}* added to *${releaseName}* release. :point_up:`;
@@ -136,9 +136,21 @@ exports.oncall = async (req, res) => {
 
   } else if (addReleaseRegEx.test(text)) { // add new release: `/oncall 18.9.1 9/7/18`
       console.log('ADD regex matched');
-      // if release exists, open dialog for editing release
+      res.send('');
+      const matches = addReleaseRegEx.exec(text);
+      const releaseName = matches[1];
+      const releaseDate = matches[2];
+      const release = await releases.getReleaseByName(releaseName);
 
-      // otherwise open dialog for adding new release
+      // if release exists, open dialog for editing release
+      if (release) {
+        slackResponse = await releases.renderEditReleaseModal(slackReq);
+        return slackResponse;
+      }
+
+      // otherwise add release
+      slackResponse = await releases.addRelease(releaseName, releaseDate, slackReq.response_url);
+      return slackResponse;
 
   } else { // unknown command
     res.send('Sorry, I didn\'t understand that command. Please try again!');
