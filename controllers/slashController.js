@@ -4,9 +4,10 @@ const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 
 const Release = mongoose.model('Release');
+const Engineer = mongoose.model('Engineer');
 
 exports.oncall = async (req, res) => {
-  res.send('');
+  // res.send('');
   const slackReq = req.body;
   let slackResponse = null;
   const text = slackReq.text;
@@ -22,10 +23,12 @@ exports.oncall = async (req, res) => {
   const addReleaseRegEx = /(\d\d\.\d{1,2}\.\d{1})( ([1-9]|0[1-9]|1[012])[- /.]([1-9]|0[1-9]|[12][0-9]|3[01])[- /.]((19|20)\d\d|\d\d))/;
 
   if (text === '') { // select a release: `/oncall`
+    res.send('');
     slackResponse = await exports.selectRelease(slackReq);
     return slackResponse;
 
   } else if (releaseNameRegEx.test(text)) { // view release info: `/oncall 18.9.1`
+      res.send('');
       console.log('NAME regex matched');
       const matches = releaseNameRegEx.exec(text);
       const releaseName = matches[0];
@@ -49,12 +52,15 @@ exports.oncall = async (req, res) => {
 
   } else if (assignEngineersRegEx.test(text)) { // assign people to release: `/oncall 18.9.1 -o @willem.jager -b @hai.phan`
       console.log('ASSIGN regex matched');
+      res.send('Got it! Loading...');
       const matches = assignEngineersRegEx.exec(text);
       // const slackIdRegEx = /((<@(\w+)(\|(\w+))?>) ?)/g;
       const slackIdRegEx = /(?<=<@)\w*(?=|)/g;
       const releaseName = matches[1];
-      const onCall = matches[3];
-      const backup = matches[16];
+
+      // find out whether -o or -b was passed first
+      const onCall = matches[2] === '-o' ? matches[3] : matches[16];
+      const backup = matches[2] === '-b' ? matches[3] : matches[16];
       const release = await releases.getReleaseByName(releaseName);
 
       // if release doesn't exist, open dialog for adding release
@@ -64,40 +70,67 @@ exports.oncall = async (req, res) => {
 
       // if release exists
       } else {
-        const releaseId = release._id;
         const responseUrl = slackReq.response_url;
-        const title = `You chose the *${releaseName}* release.`;
-        let primarysToAdd = null;
-        let backupsToAdd = null;
+        let primaryEngineers = null;
+        let backupEngineers = null;
+        const existingSlackIds = [
+          ...release.primaryEngineers.map((engineer) => engineer.slackId), 
+          ...release.backupEngineers.map((engineer) => engineer.slackId)
+        ];
 
-        // if there were any matches for onCall engineers, use the slackIdRegex to get an array of their slack IDs
-        const primarySlackIds = onCall ? onCall.match(slackIdRegEx) : null;
-        if (primarySlackIds) {
+        // if there were any regex matches for on call engineers
+        if (onCall) {
+          // use the slackIdRegex to get an array of their slack IDs
+          const primarySlackIds = onCall.match(slackIdRegEx);
+
           // check primarys already assigned to the release to remove slackIds of engineers already assigned
-          primarysToAdd = primarySlackIds.filter((slackId) => {
-            const existingSlackIds = release.primaryEngineers.map((engineer) => engineer.slackId);
+          const primarysToAdd = primarySlackIds.filter((slackId) => {
             return !existingSlackIds.includes(slackId);
           });
+
+          const primaryPromises = primarysToAdd.map((slackId) => {
+            const engineerPromise = Engineer.find({ slackId });
+            return engineerPromise;
+          });
+
+          [primaryEngineers] = await Promise.all(primaryPromises);
         }
 
-        // if there were any matches for backup engineers, use the slackIdRegex to get an array of their slack IDs
-        const backupSlackIds = backup ? backup.match(slackIdRegEx) : null;
-        if (backupSlackIds) {
+        if (backup) {
+          // if there were any matches for backup engineers, use the slackIdRegex to get an array of their slack IDs
+          const backupSlackIds = backup.match(slackIdRegEx);
+
           // check backups already assigned to the release to remove slackIds of engineers already assigned
-          backupsToAdd = backupSlackIds.filter((slackId) => {
-            const existingSlackIds = release.backupEngineers.map((engineer) => engineer.slackId);
+          const backupsToAdd = backupSlackIds.filter((slackId) => {
             return !existingSlackIds.includes(slackId);
           });
+
+          const backupPromises = backupsToAdd.map((slackId) => {
+            const engineerPromise = Engineer.find({ slackId });
+            return engineerPromise;
+          });
+
+          [backupEngineers] = await Promise.all(backupPromises);
         }
 
-        console.log(primarysToAdd);
-        console.log(backupsToAdd);
+        const engineersToAdd = {
+          primaryEngineers: primaryEngineers ? primaryEngineers.map((engineer) => engineer.id): [],
+          backupEngineers: backupEngineers ? backupEngineers.map((engineer) => engineer.id) : [],
+        };
         
         // update release
-
+        const updatedRelease = await Release.findOneAndUpdate({ name: releaseName }, { $push: engineersToAdd }, { new: true });
+        let namesAdded = 'No new engineers';
+        if (primaryEngineers || backupEngineers) {
+          namesAdded = [
+            ...primaryEngineers.map(engineer => engineer.name),
+            ...backupEngineers.map(engineer => engineer.name),
+          ].join(', ');
+        }
+        const title = `*${namesAdded}* added to *${releaseName}* release. :point_up:`;
 
         // display updated release info
-        slackResponse = await releases.showRelease(releaseId, slackReq.response_url, title);
+        slackResponse = await releases.showRelease(updatedRelease.id, responseUrl, title);
         return slackResponse;
       }
 
@@ -108,10 +141,6 @@ exports.oncall = async (req, res) => {
   } else { // unknown command
 
   }
-
-
-
-
 };
 
 exports.selectRelease = async (slackReq) => {
