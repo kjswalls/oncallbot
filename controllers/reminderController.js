@@ -4,28 +4,36 @@ const utils = require('../handlers/utils');
 const Reminder = mongoose.model('Reminder');
 const RELEASE_REMINDER_HOUR = '20'; // 8 PM
 
-exports.createReminder = async (date, text, user) => {
+exports.createReminders = async (date, text, users) => {
   const timestamp = new Date(date).setHours(RELEASE_REMINDER_HOUR).valueOf();
   const seconds = Math.floor(timestamp / 1000); // timestamp is in milliseconds
 
-  const reminderInput = {
-    text,
-    time: seconds,
-    user: user.slackId,
-  };
+  const reminderInputs = users.map((user) => {
+    return {
+      text,
+      time: seconds,
+      user: user.slackId,
+    };
+  });
+
+  const postPromises = reminderInputs.map((reminderInput) => utils.postToSlack('https://slack.com/api/reminders.add', reminderInput));
+  const slackResponses = await Promise.all(postPromises);
 
   // as of 9/15/18 this currently fails silently if the reminder time is in the past, aka if the release is in the past
-  const slackResponse = await utils.postToSlack('https://slack.com/api/reminders.add', reminderInput);
-
-  if (slackResponse.ok) {
-    const reminderData = {
-      slackId: slackResponse.reminder.id,
-      engineer: user.id,
-      time: timestamp,
-    };
+  const reminderDataObjs = slackResponses.map((slackResponse, index) => {
+    if (slackResponse.ok) {
+      return {
+        slackId: slackResponse.reminder.id,
+        engineer: users[index].id,
+        time: timestamp,
+      };
+    }
+  });
   
-    const reminder = await (new Reminder(reminderData).save());
-    return reminder;
+  // if there's at least one object to insert
+  if (reminderDataObjs[0]) {
+    const reminders = await Reminder.insertMany(reminderDataObjs);
+    return reminders;
   }
   return;
 };

@@ -143,7 +143,7 @@ exports.assignEngineerToRelease = async (slackReq) => {
 
   // create a reminder for that engineer
   const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
-  const reminder = await reminders.createReminder(release.date, reminderText, engineer);
+  const reminder = await reminders.createReminders(release.date, reminderText, [engineer]);
 
   exports.showRelease(release.id, slackReq.response_url, title);
 };

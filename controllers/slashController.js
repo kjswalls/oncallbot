@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const releases = require('./releaseController');
+const reminders = require('./reminderController');
 const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 
@@ -130,6 +131,11 @@ exports.oncall = async (req, res) => {
 
         // display updated release info
         slackResponse = await releases.showRelease(updatedRelease.id, responseUrl, title);
+
+        // add reminders for engineers
+        const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
+        const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers, ...backupEngineers]);
+
         return slackResponse;
       }
 
