@@ -172,4 +172,8 @@ exports.removeEngineerFromRelease = async (slackReq) => {
 
   const title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;
   exports.showRelease(release._id, slackReq.response_url, title);
+
+  // delete release reminders for these engineers
+  const reminderReponse = await reminders.deleteReminders([primary, backup], release.date);
+  return;
 };

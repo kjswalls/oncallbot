@@ -89,7 +89,7 @@ exports.oncall = async (req, res) => {
           });
 
           const primaryPromises = primarysToAdd.map((slackId) => {
-            const engineerPromise = Engineer.find({ slackId });
+            const engineerPromise = Engineer.findOne({ slackId });
             return engineerPromise;
           });
 
@@ -106,7 +106,7 @@ exports.oncall = async (req, res) => {
           });
 
           const backupPromises = backupsToAdd.map((slackId) => {
-            const engineerPromise = Engineer.find({ slackId });
+            const engineerPromise = Engineer.findOne({ slackId });
             return engineerPromise;
           });
 

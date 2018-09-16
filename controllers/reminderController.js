@@ -38,6 +38,48 @@ exports.createReminders = async (date, text, users) => {
   return;
 };
 
-exports.deleteReminder = async (id) => {
-  //
+exports.deleteReminders = async (engineerIds, date) => {
+  const timestamp = new Date(date).setHours(RELEASE_REMINDER_HOUR).valueOf();
+  let slackResponses = null;
+
+  const reminders = await Reminder.find({ engineer: {$in: engineerIds}, time: timestamp });
+
+  if (reminders[0]) {
+    const postPromises = reminders.map((reminder) => {
+      return utils.postToSlack('https://slack.com/api/reminders.delete', { reminder: reminder.slackId })
+    });
+    slackResponses = await Promise.all(postPromises);
+  }
+
+  // if at least one reminder was deleted from slack
+  if (slackResponses[0].ok) {
+    const deletePromises = slackResponses.map((response, index) => {
+      if (response.ok) {
+        return Reminder.findOneAndRemove({ _id: reminders[index].id });
+      }
+    });
+    const deleted = await Promise.all(deletePromises);
+    return deleted;
+  }
+  // const deletePromises = reminders.map((reminder) => {
+  //   return Reminder.findOneAndRemove({ _id: reminder.id });
+  // });
+
+
+  // const deletePromises = engineerIds.map((id) => {
+  //   return Reminder.findOneAndRemove({ engineer: id, time: timestamp });
+  // });
+
+  // const remindersDeleted = await Promise.all(deletePromises);
+
+  // if there was at least one reminder deleted
+  // if (remindersDeleted[0]) {
+  //   const postPromises = remindersDeleted.filter((reminder) => {
+  //     if (reminder) {
+  //       return utils.postToSlack('https://slack.com/api/reminders.delete', reminder.slackId)
+  //     }
+  //   });
+  //   const slackResponses = await Promise.all(postPromises);
+  //   return slackResponses;
+  // }
 };
