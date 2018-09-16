@@ -7,7 +7,6 @@ const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
 
 exports.oncall = async (req, res) => {
-  // res.send('');
   const slackReq = req.body;
   let slackResponse = null;
   const text = slackReq.text;

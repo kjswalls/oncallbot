@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 const engineers = require('./engineerController');
+const reminders = require('./reminderController');
 
 const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
+const RELEASE_START_TIME = '21:00'; // 9 PM
 
 exports.validateReleaseInfo = (formData) => {
   const name = formData.name;
@@ -98,7 +100,10 @@ exports.renderEditReleaseModal = async (slackReq) => {
 };
 
 exports.editRelease = async (slackReq) => {
-  const formData = slackReq.submission;
+  const formData = {
+    name: slackReq.submission.name,
+    date: `${slackReq.submission.date} ${RELEASE_START_TIME}`,
+  };
   const releaseId = slackReq.state;
   const title = `Release *${slackReq.submission.name}* updated :point_up:`;
   const updatedRelease = await Release.findOneAndUpdate(
@@ -110,10 +115,11 @@ exports.editRelease = async (slackReq) => {
   exports.showRelease(updatedRelease._id, slackReq.response_url, title);
 };
 
+// TODO: add validation so that releases can only be added in the future
 exports.addRelease = async (name, date, responseUrl) => {
   const releaseData = {
     name,
-    date: new Date(date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' })
+    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric' })
   };
   const release = await (new Release(releaseData).save());
   const releaseOptions = await exports.getReleasesAsOptions();
@@ -135,7 +141,11 @@ exports.assignEngineerToRelease = async (slackReq) => {
   };
   const release = await Release.findOneAndUpdate({ name: releaseName }, { $push: updatedRelease }, { new: true }).exec();
 
-  exports.showRelease(release._id, slackReq.response_url, title);
+  // create a reminder for that engineer
+  const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
+  const reminder = await reminders.createReminder(release.date, reminderText, engineer);
+
+  exports.showRelease(release.id, slackReq.response_url, title);
 };
 
 exports.removeEngineerFromRelease = async (slackReq) => {

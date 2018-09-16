@@ -25,7 +25,7 @@ const engineerSchema = new Schema({
     type: String,
     required: 'Please supply a pod',
     trim: true
-  }
+  },
 });
 
 engineerSchema.virtual('releasePrimary', {
