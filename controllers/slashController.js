@@ -93,7 +93,7 @@ exports.oncall = async (req, res) => {
             return engineerPromise;
           });
 
-          [primaryEngineers] = await Promise.all(primaryPromises);
+          [...primaryEngineers] = await Promise.all(primaryPromises);
         }
 
         if (backup) {
@@ -110,7 +110,7 @@ exports.oncall = async (req, res) => {
             return engineerPromise;
           });
 
-          [backupEngineers] = await Promise.all(backupPromises);
+          [...backupEngineers] = await Promise.all(backupPromises);
         }
 
         const engineersToAdd = {
@@ -134,7 +134,7 @@ exports.oncall = async (req, res) => {
 
         // add reminders for engineers
         const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
-        const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers, ...backupEngineers]);
+        const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers ? primaryEngineers : [], ...backupEngineers ? backupEngineers : []]);
 
         return slackResponse;
       }

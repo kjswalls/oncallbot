@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const utils = require('../handlers/utils');
+const messages = require('../handlers/messages');
 
 const Reminder = mongoose.model('Reminder');
 const RELEASE_REMINDER_HOUR = '20'; // 8 PM
@@ -31,7 +32,7 @@ exports.createReminders = async (date, text, users) => {
   });
   
   // if there's at least one object to insert
-  if (reminderDataObjs[0]) {
+  if (reminderDataObjs && reminderDataObjs[0]) {
     const reminders = await Reminder.insertMany(reminderDataObjs);
     return reminders;
   }
@@ -44,7 +45,7 @@ exports.deleteReminders = async (engineerIds, date) => {
 
   const reminders = await Reminder.find({ engineer: {$in: engineerIds}, time: timestamp });
 
-  if (reminders[0]) {
+  if (reminders && reminders[0]) {
     const postPromises = reminders.map((reminder) => {
       return utils.postToSlack('https://slack.com/api/reminders.delete', { reminder: reminder.slackId })
     });
@@ -52,7 +53,7 @@ exports.deleteReminders = async (engineerIds, date) => {
   }
 
   // if at least one reminder was deleted from slack
-  if (slackResponses[0].ok) {
+  if (slackResponses && slackResponses[0].ok) {
     const deletePromises = slackResponses.map((response, index) => {
       if (response.ok) {
         return Reminder.findOneAndRemove({ _id: reminders[index].id });
@@ -60,26 +61,10 @@ exports.deleteReminders = async (engineerIds, date) => {
     });
     const deleted = await Promise.all(deletePromises);
     return deleted;
+  } else {
+    const message = messages.reminderError('yOLO');
+    const errorResponse = await utils.postToSlack('https://slack.com/api/chat.postMessage', message);
   }
-  // const deletePromises = reminders.map((reminder) => {
-  //   return Reminder.findOneAndRemove({ _id: reminder.id });
-  // });
 
-
-  // const deletePromises = engineerIds.map((id) => {
-  //   return Reminder.findOneAndRemove({ engineer: id, time: timestamp });
-  // });
-
-  // const remindersDeleted = await Promise.all(deletePromises);
-
-  // if there was at least one reminder deleted
-  // if (remindersDeleted[0]) {
-  //   const postPromises = remindersDeleted.filter((reminder) => {
-  //     if (reminder) {
-  //       return utils.postToSlack('https://slack.com/api/reminders.delete', reminder.slackId)
-  //     }
-  //   });
-  //   const slackResponses = await Promise.all(postPromises);
-  //   return slackResponses;
-  // }
+  return;
 };

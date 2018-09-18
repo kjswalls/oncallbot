@@ -343,3 +343,12 @@ exports.removeEngineerModal = (triggerId, releaseName, primaryEngineers, backupE
 
   return dialog;
 };
+
+exports.reminderError = (name) => {
+  const message = {
+    response_type: 'in_channel',
+    text: `Sorry, there was an error creating a reminder for ${name}`,
+  };
+
+  return message;
+};
