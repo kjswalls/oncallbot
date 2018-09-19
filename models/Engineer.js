@@ -26,6 +26,12 @@ const engineerSchema = new Schema({
     required: 'Please supply a pod',
     trim: true
   },
+  // this is used to calculate who gets to be assigned to each release on rotation
+  weight: {
+    type: Number,
+    required: 'Please supply a rotation weight',
+    default: 0,
+  },
 });
 
 engineerSchema.virtual('releasePrimary', {

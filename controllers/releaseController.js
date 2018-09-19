@@ -3,6 +3,7 @@ const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 const engineers = require('./engineerController');
 const reminders = require('./reminderController');
+const rotation = require('../handlers/rotation');
 
 const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
@@ -122,7 +123,8 @@ exports.addRelease = async (name, date, responseUrl) => {
     date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric' })
   };
   const release = await (new Release(releaseData).save());
-  const releaseOptions = await exports.getReleasesAsOptions();
+  // const releaseOptions = await exports.getReleasesAsOptions();
+  const engineersAssigned = rotation.assignEngineers(release);
   const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:`;
 
   const slackResponse = await exports.showRelease(release.id, responseUrl, title);

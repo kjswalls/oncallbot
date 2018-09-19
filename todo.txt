@@ -7,6 +7,7 @@ Add automatic reminders to on call engineers
 Add logic for assigning engineers automatically on a rotation
 Add help command
 Make readme
+Remove random cruft files (babel?)
 Add option to view history of release assignments?
 Add option to set/remove reminders for releases?
 Add remove command for multiple removals at once?

@@ -78,6 +78,7 @@ exports.addEngineer = async (slackReq) => {
     slackId: slackReq.submission.slackId,
     discipline: slackReq.submission.discipline,
     pod: slackReq.submission.pod,
+    weight: 0,
   };
   const engineer = await (new Engineer(formData).save());
 
