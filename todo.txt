@@ -1,13 +1,15 @@
 // Done
 Add validation to all forms (you can the same engineer multiple times to a release)
 Add routes/logic for accepting commands instead of using the UI
+Add automatic reminders to on call engineers
 
 // To-Do
-Add automatic reminders to on call engineers
 Add logic for assigning engineers automatically on a rotation
 Add help command
-Add option to view history of release assignments?
 Make readme
+Add option to view history of release assignments?
+Add option to set/remove reminders for releases?
+Add remove command for multiple removals at once?
 Add slack Signing Secrets verification
 Find out if we really need to return slackResponse all the time inside releaseMethods and engineerMethods
 Find out if we really need awaits on all the calls in actionController
