@@ -134,7 +134,7 @@ exports.assignEngineerToRelease = async (slackReq) => {
   const id = slackReq.submission.id;
   const engineer = await Engineer.findOne({ _id: id });
   const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
-  const title = `You assigned *${engineer.name}* to ${releaseName} :call_me_hand:`;
+  const title = `You assigned *${engineer.name}* to ${releaseName} :call_me_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
 
   const updatedRelease = {
     [fieldName]: engineer._id,
@@ -143,7 +143,7 @@ exports.assignEngineerToRelease = async (slackReq) => {
 
   // create a reminder for that engineer
   const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
-  const reminder = await reminders.createReminders(release.date, reminderText, [engineer]);
+  const reminder = await reminders.createReminders(release.date, reminderText, [engineer], slackReq.response_url);
 
   exports.showRelease(release.id, slackReq.response_url, title);
 };
@@ -174,6 +174,6 @@ exports.removeEngineerFromRelease = async (slackReq) => {
   exports.showRelease(release._id, slackReq.response_url, title);
 
   // delete release reminders for these engineers
-  const reminderReponse = await reminders.deleteReminders([primary, backup], release.date);
+  const reminderReponse = await reminders.deleteReminders([primary, backup], release.date, slackReq.response_url);
   return;
 };

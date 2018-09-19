@@ -127,14 +127,14 @@ exports.oncall = async (req, res) => {
             ...backupEngineers ? backupEngineers.map(engineer => engineer.name): [],
           ].join(', ');
         }
-        const title = `*${namesAdded}* added to *${releaseName}* release. :point_up:`;
+        const title = `*${namesAdded}* added to *${releaseName}* release. :point_up:\n Use the \`/remind list\` command to see reminders that have been set`;
 
         // display updated release info
         slackResponse = await releases.showRelease(updatedRelease.id, responseUrl, title);
 
         // add reminders for engineers
         const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
-        const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers ? primaryEngineers : [], ...backupEngineers ? backupEngineers : []]);
+        const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers ? primaryEngineers : [], ...backupEngineers ? backupEngineers : []], responseUrl);
 
         return slackResponse;
       }

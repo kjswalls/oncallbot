@@ -102,6 +102,21 @@ exports.handleActions = async (req, res) => {
       return response;
 
     case 'remove_engineer_from_release_form':
+      if (!slackReq.submission.primary && !slackReq.submission.backup) {
+        errors = {
+          errors: [
+            {
+              name: 'primary',
+              error: 'You must select at least one engineer to remove'
+            },
+            {
+              name: 'backup',
+              error: 'You must select at least one engineer to remove'
+            }
+          ]
+        };
+        return res.json(errors);
+      }
       res.send('');
       response = await releases.removeEngineerFromRelease(slackReq);
       return response;

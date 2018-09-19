@@ -344,10 +344,19 @@ exports.removeEngineerModal = (triggerId, releaseName, primaryEngineers, backupE
   return dialog;
 };
 
-exports.reminderError = (name) => {
+exports.createReminderError = (reason) => {
   const message = {
-    response_type: 'in_channel',
-    text: `Sorry, there was an error creating a reminder for ${name}`,
+    // response_type: 'in_channel',
+    text: `There was a problem creating a reminder for the user(s) you assigned. :disappointed: ${reason}`,
+  };
+
+  return message;
+};
+
+exports.deleteReminderError = (reason) => {
+  const message = {
+    // response_type: 'in_channel',
+    text: `There was a problem deleting a reminder for the user(s) you removed. :disappointed: ${reason}`,
   };
 
   return message;
