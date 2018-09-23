@@ -70,8 +70,8 @@ exports.getReleasesAsOptions = async (limit = 5) => {
 
 exports.showRelease = async (releaseId, responseUrl, title) => {
   const release = await exports.getReleaseById(releaseId);
-  const primaryEngineers = release.primaryEngineers.map(engineer => engineer.name);
-  const backupEngineers = release.backupEngineers.map(engineer => engineer.name);
+  const primaryEngineers = release.primaryEngineers.map(engineer => engineer ? engineer.name : null);
+  const backupEngineers = release.backupEngineers.map(engineer => engineer ? engineer.name : null);
   const engineerOptions = await engineers.getEngineersAsOptions();
   const remainingEngineers = engineers.getEngineersLeftInPool(release, engineerOptions);
 
@@ -118,23 +118,29 @@ exports.editRelease = async (slackReq) => {
 
 // TODO: add validation so that releases can only be added in the future
 exports.addRelease = async (name, date, responseUrl) => {
+  const engineersAssigned = await rotation.assignEngineers(name);
   const releaseData = {
     name,
-    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric' })
+    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric' }),
+    primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
+    backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
   };
   const release = await (new Release(releaseData).save());
-  // const releaseOptions = await exports.getReleasesAsOptions();
-  const engineersAssigned = rotation.assignEngineers(release);
   const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:`;
 
   const slackResponse = await exports.showRelease(release.id, responseUrl, title);
+
+  // create reminders for engineers
+  const reminderText = `Release ${name} starts at 9PM. You're on call :slightly_smiling_face:`;
+  const reminder = await reminders.createReminders(release.date, reminderText, [...engineersAssigned.primaryEngineers, ...engineersAssigned.backupEngineers], responseUrl);
+
   return slackResponse;
 };
 
 exports.assignEngineerToRelease = async (slackReq) => {
   const releaseName = slackReq.state;
   const id = slackReq.submission.id;
-  const engineer = await Engineer.findOne({ _id: id });
+  const engineer = await Engineer.findOneAndUpdate({ _id: id }, { $inc: { weight: 1 }}, { new: true });
   const fieldName = slackReq.submission.primary_or_backup === 'primary' ? 'primaryEngineers' : 'backupEngineers';
   const title = `You assigned *${engineer.name}* to ${releaseName} :call_me_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
 
@@ -158,11 +164,13 @@ exports.removeEngineerFromRelease = async (slackReq) => {
   let backupEngineer = null;
 
   if (primary) {
-    primaryEngineer = await Engineer.findOne({ _id: primary });
+    // decrement weight of engineer
+    primaryEngineer = await Engineer.findOneAndUpdate({ _id: primary }, { $inc: { weight: -1 }}, { new: true });
     namesRemoved.push(primaryEngineer.name)
   };
   if (backup) {
-    backupEngineer = await Engineer.findOne({ _id: backup });
+    // decrement weight of engineer
+    backupEngineer = await Engineer.findOneAndUpdate({ _id: backup }, { $inc: { weight: -1 }}, { new: true });
     namesRemoved.push(backupEngineer.name)
   };
 
