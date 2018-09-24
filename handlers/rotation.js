@@ -28,10 +28,7 @@ const Engineer = mongoose.model('Engineer');
 // assign them in the database
 
 exports.assignEngineers = async (releaseName) => {
-  // get release and all releases in the future after the release that was added or edited
-  // const release = await Release.findOne({ name: releaseName });
-
-  // get engineers
+// get engineers
   const engineers = await Engineer
     .find({ _id: { $exists: true }})
     .sort({ weight: 1 });
@@ -43,6 +40,7 @@ exports.assignEngineers = async (releaseName) => {
   const beHash = createHash(bes);
 
   const assigned = {
+    releaseName,
     primaryEngineers: [],
     backupEngineers: [],
   };
@@ -77,57 +75,44 @@ exports.assignEngineers = async (releaseName) => {
 
   const updatedEngineers = await Promise.all(updatePromises);
 
-  // // update the hash
+  // // update the hashes
   // const updatedHash = updateHash(feHash, assigned);
   // console.log(updatedHash);
 
   return assigned;
 };
 
-async function updateFutureReleases() {
-  // get release and all releases in the future after the release that was added or edited
+exports.updateFutureReleases = async (release) => {
+  // get all releases in the future after the release that was added or edited
   const releases = await Release
-    .find({ date: { $gte: release.date }})
+    .find({ date: { $gt: release.date }})
     .sort({ date: 1 });
 
-  // get engineers
-  const engineers = await Engineer
-    .find({ $exists: true })
-    .sort({ weight: 1 });
-  const fes = engineers.filter(engineer => engineer.discipline === 'front_end');
-  const bes = engineers.filter(engineer => engineer.discipline === 'back_end');
-
-  // maintain hashes of engineer weights
-  const feHash = createHash(fes);
-  const beHash = createHash(bes);
-
-  // loop through each release
-  releases.forEach((release) => {
-    let feOnCall;
-    let feBackup;
-    let beOnCall;
-    let beBackup;
-
-    // get the FE with the lowest weight
-    ({ feOnCall, feBackup } = getTwoLowestWeights(feHash));
-
-    // look through BEs for lowest weight
-    ({ beOnCall, beBackup } = getTwoLowestWeights(beHash));
-
-    // increment weight of engineers assigned
-    feOnCall.weight++;
-    feBackup.weight++;
-    beOnCall.weight++;
-    beBackup.weight++;
-
-    // update the hash
-    
-
-    // assign those engineers to release
+  // for each release, assign engineers
+  const engineerPromises = releases.map((release) => {
+    const assigned = exports.assignEngineers(release.name);
+    return assigned;
   });
-  
-  // update the database with weight changes
-}
+
+  const engineerAssignments = await Promise.all(engineerPromises);
+
+  // for each group of assigned engineers, updated the releases in the DB
+  const releasePromises = engineerAssignments.map((engineersAssigned) => {
+    const releaseData = {
+      primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
+      backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
+    };
+    const updatedRelease = Release.findOneAndUpdate(
+      { name: engineersAssigned.releaseName },
+      releaseData,
+      { new: true }
+    );
+    return updatedRelease;
+  });
+
+  const updatedReleases = await Promise.all(releasePromises);
+  return updatedReleases;
+};
 
 function createHash(engineers) {
   const hash = new Map();

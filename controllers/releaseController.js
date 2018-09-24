@@ -134,8 +134,16 @@ exports.addRelease = async (name, date, responseUrl) => {
   const reminderText = `Release ${name} starts at 9PM. You're on call :slightly_smiling_face:`;
   const reminder = await reminders.createReminders(release.date, reminderText, [...engineersAssigned.primaryEngineers, ...engineersAssigned.backupEngineers], responseUrl);
 
+  const updatedReleses = await rotation.updateFutureReleases(release);
+  // const updatedReleases = await exports.updateReleaseEngineers(release);
+
   return slackResponse;
 };
+
+// exports.updateReleaseEngineers = async (release) => {
+//   const updated = await rotation.updateFutureReleases(release);
+
+// };
 
 exports.assignEngineerToRelease = async (slackReq) => {
   const releaseName = slackReq.state;
