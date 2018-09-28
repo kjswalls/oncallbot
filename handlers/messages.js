@@ -74,7 +74,7 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
         fallback: 'You are unable to edit this release or add an engineer',
         color: '#E8E8E8',
         attachment_type: 'default',
-        callback_id: 'edit_release_or_add_engineer',
+        callback_id: 'edit_release_or_manage_pool',
         actions: [
           {
             name: 'edit_release_button',
@@ -82,11 +82,17 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
             type: 'button',
             value: 'edit_release',
           },
+          // {
+          //   name: 'add_engineer_button',
+          //   text: 'Add an engineer to the pool',
+          //   type: 'button',
+          //   value: 'add_engineer',
+          // },
           {
-            name: 'add_engineer_button',
-            text: 'Add an engineer to the pool',
+            name: 'manage_pool_button',
+            text: 'Manage the engineer pool',
             type: 'button',
-            value: 'add_engineer',
+            value: 'manage_pool',
           },
         ],
       },
@@ -95,22 +101,96 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
 
   // if there are engineers left in the pool, show the 'Assign Engineer' button
   if (remainingEngineers.frontEnd.length || remainingEngineers.backEnd.length) {
-    message.attachments[1].actions.push({
-      name: 'assign_engineer_button',
-      text: 'Assign engineer',
-      type: 'button',
-      value: 'assign_engineer_to_release',
-    },);
+    message.attachments[1].actions.push(
+      {
+        name: 'assign_engineer_button',
+        text: 'Assign engineer',
+        type: 'button',
+        value: 'assign_engineer_to_release',
+      },
+    );
   }
 
   // if there are engineers assigned to the release, show the 'Remove Engineer' button
   if (primaryEngineers.length || backupEngineers.length) {
-    message.attachments[1].actions.push({
-      name: 'remove_engineer_button',
-      text: 'Remove engineer',
-      type: 'button',
-      value: 'remove_engineer_from_release',
-    },);
+    message.attachments[1].actions.push(
+      {
+        name: 'remove_engineer_button',
+        text: 'Remove engineer',
+        type: 'button',
+        value: 'remove_engineer_from_release',
+      },
+    );
+  }
+
+  return message;
+};
+
+exports.displayPool = (frontEnds, backEnds, backToRelease, title) => {
+  const message = {
+    response_type: 'in_channel',
+    attachments: [
+      {
+        fallback: `Pool of engineers available for releases`,
+        color: 'good',
+        pretext: title,
+        title: '',
+        fields: [
+          {
+              title: 'Front End:',
+              value: `${frontEnds.length ? frontEnds.join(', ') : 'None'}\n`,
+              "short": false
+          },
+          {
+            title: 'Back End:',
+            value: `${backEnds.length ? backEnds.join(', ') : 'None'}`,
+            "short": false
+          },
+        ],
+      },
+      {
+        text: '',
+        fallback: 'You are unable to add or remove engineers',
+        color: '#E8E8E8',
+        attachment_type: 'default',
+        callback_id: 'add_or_remove_engineers_from_pool',
+        actions: [
+          {
+            name: 'add_engineer_to_pool_button',
+            text: 'Add an engineer to the pool',
+            type: 'button',
+            value: 'add_engineer_to_pool',
+          },
+        ],
+      },
+      {
+        text: '',
+        fallback: 'Unable to go back to release',
+        color: '#E8E8E8',
+        attachment_type: 'default',
+        callback_id: 'back_to_release',
+        actions: [
+          {
+            name: backToRelease,
+            text: 'Back to release',
+            type: 'button',
+            value: 'back_to_release',
+          },
+        ],
+      },
+    ]
+  };
+
+  // if there are engineers in the pool, show the 'Remove Engineer' button
+  if (frontEnds.length || backEnds.length) {
+    message.attachments[1].actions.push(
+      {
+        name: 'remove_engineer_from_pool_button',
+        text: 'Remove engineer',
+        type: 'button',
+        value: 'remove_engineer_from_pool',
+      },
+    );
   }
 
   return message;
@@ -310,7 +390,69 @@ exports.addEngineerModal = (triggerId, releaseName) => {
   return dialog;
 };
 
-exports.removeEngineerModal = (triggerId, releaseName, primaryEngineers, backupEngineers) => {
+exports.removeEngineerFromPoolModal = (triggerId, releaseName, frontEnds, backEnds) => {
+  let optionLabel = 'option_groups';
+  let options = [];
+
+  // if there are frontends to display but no backends
+  if (frontEnds.length && !backEnds.length) {
+    // options = frontEndUnique;
+    options = [
+      {
+        "label": "Front End",
+        "options": frontEnds,
+      },
+    ];
+  }
+
+  // if there are backends to display but no frontends
+  if (!frontEnds.length && backEnds.length) {
+    // options = backEndUnique;
+    options = [
+      {
+        "label": "Back End",
+        "options": backEnds,
+      },
+    ];
+  }
+
+  // if there are both frontends and backends to display
+  if (frontEnds.length && backEnds.length) {
+    // optionLabel = 'option_groups';
+    options = [
+      {
+        "label": "Front End",
+        "options": frontEnds,
+      },
+      {
+        "label": "Back End",
+        "options": backEnds,
+      }
+    ];
+  }
+
+  const dialog = {
+    trigger_id: triggerId,
+    dialog: {
+      state: releaseName,
+      callback_id: 'remove_engineer_from_pool_form',
+      title: `Remove engineer`,
+      submit_label: 'Remove',
+      elements: [
+        {
+          label: 'Name',
+          name: "id",
+          type: "select",
+          [optionLabel]: options,
+        },
+      ],
+    },
+  };
+
+  return dialog;
+};
+
+exports.removeEngineerFromReleaseModal = (triggerId, releaseName, primaryEngineers, backupEngineers) => {
   const dialog = {
     trigger_id: triggerId,
     dialog: {

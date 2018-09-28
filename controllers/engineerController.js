@@ -89,6 +89,13 @@ exports.addEngineer = async (slackReq) => {
   return releases.showRelease(release._id, responseUrl, title);
 };
 
+exports.removeEngineerFromPool = async (slackReq) => {
+  const removed = await Engineer.remove({ _id: slackReq.submission.id });
+  const title = 'Engineer removed :wave:'
+  const slackResponse = await exports.displayPool(slackReq.response_url, slackReq.state, title)
+  return slackResponse;
+};
+
 exports.renderAddEngineerModal = async (slackReq) => {
   const releaseName = slackReq.original_message.attachments[0].title;
   const triggerId = slackReq.trigger_id;
@@ -99,7 +106,18 @@ exports.renderAddEngineerModal = async (slackReq) => {
   return slackResponse;
 };
 
-exports.renderRemoveEngineerModal = async(slackReq) => {
+exports.renderRemoveEngineerFromPoolModal = async (slackReq) => {
+  const releaseName = slackReq.original_message.attachments[2].actions[0].name;;
+  const triggerId = slackReq.trigger_id;
+  const engineerOptions = await exports.getEngineersAsOptions();
+
+  const dialog = messages.removeEngineerFromPoolModal(triggerId, releaseName, engineerOptions.frontEnd, engineerOptions.backEnd);
+
+  const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
+  return slackResponse;
+};
+
+exports.renderRemoveEngineerFromReleaseModal = async (slackReq) => {
   // find the release and get engineers assigned to it
   const releaseName = slackReq.original_message.attachments[0].title;
   const release = await releases.getReleaseByName(releaseName);
@@ -112,11 +130,26 @@ exports.renderRemoveEngineerModal = async(slackReq) => {
   });
 
   // pass them to messages to populate a dialog
-  const dialog = messages.removeEngineerModal(slackReq.trigger_id, releaseName, primaryEngineers, backupEngineers);
+  const dialog = messages.removeEngineerFromReleaseModal(slackReq.trigger_id, releaseName, primaryEngineers, backupEngineers);
 
   // send the dialog to slack
   const slackResponse = await utils.postToSlack('https://slack.com/api/dialog.open', dialog);
 
   // return response (is this even necessary?)
+  return slackResponse;
+};
+
+exports.displayPool = async (responseUrl, backToRelease, title) => {
+  // get all engineers from the database
+  const engineers = await Engineer.find({ _id: { $exists: true }});
+  const feNames = engineers
+    .filter(eng => eng.discipline === 'front_end')
+    .map(eng => eng.name);
+  const beNames = engineers
+    .filter(eng => eng.discipline === 'back_end')
+    .map(eng => eng.name);
+
+  const message = messages.displayPool(feNames, beNames, backToRelease, title);
+  const slackResponse = await utils.postToSlack(responseUrl, message, true);
   return slackResponse;
 };
