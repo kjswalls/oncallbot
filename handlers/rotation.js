@@ -63,12 +63,13 @@ exports.assignEngineers = async (releaseName) => {
   assigned.backupEngineers.push(frontEndsAssigned.backup, backEndsAssigned.backup);
   assigned.backupEngineers = assigned.backupEngineers.filter(eng => eng !== null);
 
+  console.log(`engineers assigned from ${releaseName}`, assigned);
   // update the database with the new weights
   const engineersArr = [...assigned.primaryEngineers, ...assigned.backupEngineers];
-  const updatePromises = engineersArr.map((engineer) => {
+  const updatePromises = engineersArr.map(async (engineer) => {
     // if engineer is not undefined (too few engineers in the pool to assign 4)
     if (engineer) {
-      const updatedEngineer = Engineer.findOneAndUpdate({ _id: engineer.id }, { weight: engineer.weight}, { new: true });
+      const updatedEngineer = await Engineer.findOneAndUpdate({ _id: engineer.id }, { weight: engineer.weight}, { new: true });
       return updatedEngineer;
     }
   });
@@ -89,20 +90,24 @@ exports.updateFutureReleases = async (release) => {
     .sort({ date: 1 });
 
   // for each release, assign engineers
-  const engineerPromises = releases.map((release) => {
-    const assigned = exports.assignEngineers(release.name);
-    return assigned;
-  });
+  let engineerAssignments = [];
 
-  const engineerAssignments = await Promise.all(engineerPromises);
+  // we do the awaits in a loop so we can execute these updates sequentially, since each assignment
+  // depends on the updated weights from the last assignment.
+  // there's fancier ways to do it with reduce, but I couldn't get those to work so...
+  for (let i = 0; i < releases.length; i++) {
+    const release = releases[i];
+    const assignment = await exports.assignEngineers(release.name);
+    engineerAssignments.push(assignment);
+  }
 
   // for each group of assigned engineers, updated the releases in the DB
-  const releasePromises = engineerAssignments.map((engineersAssigned) => {
+  const releasePromises = engineerAssignments.map(async (engineersAssigned) => {
     const releaseData = {
       primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
       backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
     };
-    const updatedRelease = Release.findOneAndUpdate(
+    const updatedRelease = await Release.findOneAndUpdate(
       { name: engineersAssigned.releaseName },
       releaseData,
       { new: true }
