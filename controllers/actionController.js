@@ -1,5 +1,6 @@
 const releases = require('./releaseController');
 const engineers = require('./engineerController');
+const slash = require('./slashController');
 
 
 exports.handleActions = async (req, res) => {
@@ -30,13 +31,38 @@ exports.handleActions = async (req, res) => {
       const responseUrl = slackReq.response_url;
       const title = `You chose the *${release.name}* release.`;
 
-      response = await releases.showRelease(releaseId, responseUrl, title);
+      response = await releases.displayRelease(releaseId, responseUrl, title);
       return response;
 
     case 'add_release': // "Add Release" button pressed
-      res.send('');
-      response = await releases.renderAddReleaseModal(slackReq);
-      return response;;
+      const selectButtonPressed = slackReq.actions[0].value;
+      if (selectButtonPressed === 'add_release') {
+        res.send('');
+        response = await releases.renderAddReleaseModal(slackReq);
+        return response;
+      }
+      // if (selectButtonPressed === 'release_history') {
+      //   res.send('');
+      //   response = await releases.displayHistory(slackReq);
+      //   return response;
+      // }
+    break;
+
+    case 'back_to_select_or_manage_pool': // release selected to view from initial menu
+      const optionsButtonPressed = slackReq.actions[0].value;
+      if (optionsButtonPressed === 'back_to_select') {
+        res.send('');
+        response = await slash.selectRelease(slackReq);
+        return response;
+      }
+      if (optionsButtonPressed === 'manage_pool') {
+        res.send('');
+        const backToRelease = slackReq.original_message.attachments[0].title;
+        const manageTitle = 'Pool of engineers available for releases:';
+        response = await engineers.displayPool(slackReq.response_url, backToRelease, manageTitle);
+        return response;
+      }
+      break;
     
     case 'add_engineer_form': // "Add Engineer" form submitted
       res.send('');
@@ -64,20 +90,26 @@ exports.handleActions = async (req, res) => {
       response = await releases.addRelease(name, date, slackReq.response_url);
       return response;
 
-    case 'edit_release_or_manage_pool':
+    case 'edit_release_or_view_history':
       const editButtonPressed = slackReq.actions[0].value;
       if (editButtonPressed === 'edit_release') {
         res.send('');
         response = await releases.renderEditReleaseModal(slackReq);
         return response;
       }
-      if (editButtonPressed === 'manage_pool') {
+      if (editButtonPressed === 'release_history') {
         res.send('');
-        const backToRelease = slackReq.original_message.attachments[0].title;
-        const manageTitle = 'Pool of engineers available for releases:';
-        response = await engineers.displayPool(slackReq.response_url, backToRelease, manageTitle);
+        const previous = slackReq.original_message.attachments[0].title;
+        response = await releases.displayHistory(slackReq, previous);
         return response;
       }
+      // if (editButtonPressed === 'manage_pool') {
+      //   res.send('');
+      //   const backToRelease = slackReq.original_message.attachments[0].title;
+      //   const manageTitle = 'Pool of engineers available for releases:';
+      //   response = await engineers.displayPool(slackReq.response_url, backToRelease, manageTitle);
+      //   return response;
+      // }
       break;
 
     case 'add_or_remove_engineers_from_pool':
@@ -96,11 +128,18 @@ exports.handleActions = async (req, res) => {
 
     case 'back_to_release':
       res.send('');
-      const previousReleaseName = slackReq.original_message.attachments[2].actions[0].name;
+      const attachments = slackReq.original_message.attachments;
+      // get name attribute of the last attachment's button - aka release name
+      const previousReleaseName = attachments[attachments.length - 1].actions[0].name;
       const previousRelease = await releases.getReleaseByName(previousReleaseName);
       const newTitle = `Viewing the *${previousReleaseName}* release.`;
 
-      response = await releases.showRelease(previousRelease.id, slackReq.response_url, newTitle);
+      response = await releases.displayRelease(previousRelease.id, slackReq.response_url, newTitle);
+      return response;
+
+    case 'close_ephemeral':
+      res.send('');
+      response = await releases.deleteEphemeral(slackReq);
       return response;
 
     case 'assign_or_remove_engineer': // buttons for adding or removing an engineer from a release
@@ -118,15 +157,6 @@ exports.handleActions = async (req, res) => {
       break;
     
     case 'assign_engineer_to_release_form': // form submitted for adding an engineer to a release
-      // validate form data
-      // errors = {
-      //   errors: await releases.validateAssignEngineer(slackReq),
-      // }
-
-      // if (errors.errors.length) {
-      //   return res.json(errors);
-      // }
-
       res.send('');
       response = await releases.assignEngineerToRelease(slackReq);
       return response;

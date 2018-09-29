@@ -45,7 +45,7 @@ exports.oncall = async (req, res) => {
         const responseUrl = slackReq.response_url;
         const title = `You chose the *${releaseName}* release.`;
   
-        slackResponse = await releases.showRelease(releaseId, slackReq.response_url, title);
+        slackResponse = await releases.displayRelease(releaseId, slackReq.response_url, title);
         return slackResponse;
       }
 
@@ -132,7 +132,7 @@ exports.oncall = async (req, res) => {
         const title = `*${namesAdded}* added to *${releaseName}* release. :point_up:\n Use the \`/remind list\` command to see reminders that have been set`;
 
         // display updated release info
-        slackResponse = await releases.showRelease(updatedRelease.id, responseUrl, title);
+        slackResponse = await releases.displayRelease(updatedRelease.id, responseUrl, title);
 
         // add reminders for engineers
         const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;

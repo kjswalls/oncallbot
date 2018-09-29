@@ -68,7 +68,7 @@ exports.getReleasesAsOptions = async (limit = 5) => {
   return options;
 };
 
-exports.showRelease = async (releaseId, responseUrl, title) => {
+exports.displayRelease = async (releaseId, responseUrl, title) => {
   const release = await exports.getReleaseById(releaseId);
   const primaryEngineers = release.primaryEngineers.map(engineer => engineer ? engineer.name : null);
   const backupEngineers = release.backupEngineers.map(engineer => engineer ? engineer.name : null);
@@ -78,6 +78,24 @@ exports.showRelease = async (releaseId, responseUrl, title) => {
   const message = messages.displayRelease(release, primaryEngineers, backupEngineers, remainingEngineers, title);
 
   const slackResponse = await utils.postToSlack(responseUrl, message, true);
+  return slackResponse;
+};
+
+exports.displayHistory = async (slackReq, releaseName, limit = 3) => {
+  const release = await exports.getReleaseByName(releaseName);
+  const releases = await Release
+    .find({ date: { $lt: release.date }})
+    .limit(limit)
+    .sort({ date: 'desc' });
+
+  const message = messages.displayHistory(releases, releaseName, limit, slackReq.channel.id, slackReq.user.id);
+  const slackResponse = await utils.postToSlack('https://slack.com/api/chat.postEphemeral', message);
+  return slackResponse;
+};
+
+exports.deleteEphemeral = async (slackReq) => {
+  const message = messages.deleteEphemeral();
+  const slackResponse = await utils.postToSlack(slackReq.response_url, message);
   return slackResponse;
 };
 
@@ -113,7 +131,7 @@ exports.editRelease = async (slackReq) => {
     { new: true }
   );
 
-  exports.showRelease(updatedRelease._id, slackReq.response_url, title);
+  exports.displayRelease(updatedRelease._id, slackReq.response_url, title);
 };
 
 // TODO: add validation so that releases can only be added in the future
@@ -128,7 +146,7 @@ exports.addRelease = async (name, date, responseUrl) => {
   const release = await (new Release(releaseData).save());
   const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:`;
 
-  const slackResponse = await exports.showRelease(release.id, responseUrl, title);
+  const slackResponse = await exports.displayRelease(release.id, responseUrl, title);
 
   // create reminders for engineers
   const reminderText = `Release ${name} starts at 9PM. You're on call :slightly_smiling_face:`;
@@ -161,7 +179,7 @@ exports.assignEngineerToRelease = async (slackReq) => {
   const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
   const reminder = await reminders.createReminders(release.date, reminderText, [engineer], slackReq.response_url);
 
-  exports.showRelease(release.id, slackReq.response_url, title);
+  exports.displayRelease(release.id, slackReq.response_url, title);
 };
 
 exports.removeEngineerFromRelease = async (slackReq) => {
@@ -189,7 +207,7 @@ exports.removeEngineerFromRelease = async (slackReq) => {
   );
 
   const title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;
-  exports.showRelease(release._id, slackReq.response_url, title);
+  exports.displayRelease(release._id, slackReq.response_url, title);
 
   // delete release reminders for these engineers
   const reminderReponse = await reminders.deleteReminders([primary, backup], release.date, slackReq.response_url);

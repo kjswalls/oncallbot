@@ -29,11 +29,82 @@ exports.selectRelease = (releaseOptions, title) => {
             type: 'button',
             value: 'add_release',
           },
+          // {
+          //   name: 'release_history_button',
+          //   text: 'Release history',
+          //   type: 'button',
+          //   value: 'release_history',
+          // },
         ],
       },
     ],
   };
 
+  return message;
+};
+
+exports.displayHistory = (releases, backToRelease, limit, channel, user) => {
+  const message = {
+    // response_type: 'in_channel',
+    text: `Last ${limit} releases before *${backToRelease}*:`,
+    channel,
+    user,
+    attachments: []
+  };
+
+  message.attachments = releases.map((release) => {
+    const primaryEngineers = release.primaryEngineers.map(engineer => engineer ? engineer.name : null);
+    const backupEngineers = release.backupEngineers.map(engineer => engineer ? engineer.name : null);
+    const attachment = {
+      fallback: `Release ${release.name} and associated engineers`,
+      color: 'good',
+      pretext: '',
+      title: release.name,
+      text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US')}\n`,
+      fields: [
+          {
+              title: 'On call:',
+              value: `${primaryEngineers.length ? primaryEngineers.join(', ') : 'None'}\n`,
+              "short": false
+          },
+          {
+            title: 'Backup:',
+            value: `${backupEngineers.length ? backupEngineers.join(', ') : 'None'}`,
+            "short": false
+        },
+      ],
+    };
+    return attachment;
+  });
+
+  message.attachments.push(
+    {
+      text: '',
+      fallback: 'Unable to close message',
+      color: '#E8E8E8',
+      attachment_type: 'default',
+      callback_id: 'close_ephemeral',
+      actions: [
+        {
+          name: 'close',
+          text: 'Close',
+          type: 'button',
+          value: 'close',
+        },
+      ],
+    },
+  );
+
+  return message;
+};
+
+exports.deleteEphemeral = () => {
+  const message = {
+    'response_type': 'ephemeral',
+    'text': '',
+    'replace_original': true,
+    'delete_original': true
+  };
   return message;
 };
 
@@ -71,10 +142,10 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
       },
       {
         text: '',
-        fallback: 'You are unable to edit this release or add an engineer',
+        fallback: 'You are unable to edit this release or view history',
         color: '#E8E8E8',
         attachment_type: 'default',
-        callback_id: 'edit_release_or_manage_pool',
+        callback_id: 'edit_release_or_view_history',
         actions: [
           {
             name: 'edit_release_button',
@@ -82,11 +153,44 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
             type: 'button',
             value: 'edit_release',
           },
+          {
+            name: 'release_history_button',
+            text: 'Last 3 releases',
+            type: 'button',
+            value: 'release_history',
+          },
           // {
           //   name: 'add_engineer_button',
           //   text: 'Add an engineer to the pool',
           //   type: 'button',
           //   value: 'add_engineer',
+          // },
+          // {
+          //   name: 'manage_pool_button',
+          //   text: 'Manage the engineer pool',
+          //   type: 'button',
+          //   value: 'manage_pool',
+          // },
+        ],
+      },
+      {
+        text: '',
+        fallback: 'Unable to go back to release',
+        color: '#E8E8E8',
+        attachment_type: 'default',
+        callback_id: 'back_to_select_or_manage_pool',
+        actions: [
+          {
+            name: 'back_to_select',
+            text: 'Back to select',
+            type: 'button',
+            value: 'back_to_select',
+          },
+          // {
+          //   name: 'release_history_button',
+          //   text: 'Last 3 releases',
+          //   type: 'button',
+          //   value: 'release_history',
           // },
           {
             name: 'manage_pool_button',

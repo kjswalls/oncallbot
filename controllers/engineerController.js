@@ -86,7 +86,9 @@ exports.addEngineer = async (slackReq) => {
   const responseUrl = slackReq.response_url;
   const title = `You added *${formData.name}* to the pool :ok_hand:`;  
 
-  return releases.showRelease(release._id, responseUrl, title);
+  // return releases.displayRelease(release.id, responseUrl, title);
+  const slackResponse = await exports.displayPool(responseUrl, slackReq.state, title)
+  return slackResponse;
 };
 
 exports.removeEngineerFromPool = async (slackReq) => {
@@ -97,7 +99,7 @@ exports.removeEngineerFromPool = async (slackReq) => {
 };
 
 exports.renderAddEngineerModal = async (slackReq) => {
-  const releaseName = slackReq.original_message.attachments[0].title;
+  const releaseName = slackReq.original_message.attachments[2].actions[0].name;
   const triggerId = slackReq.trigger_id;
 
   const dialog = messages.addEngineerModal(triggerId, releaseName);
@@ -107,7 +109,7 @@ exports.renderAddEngineerModal = async (slackReq) => {
 };
 
 exports.renderRemoveEngineerFromPoolModal = async (slackReq) => {
-  const releaseName = slackReq.original_message.attachments[2].actions[0].name;;
+  const releaseName = slackReq.original_message.attachments[2].actions[0].name;
   const triggerId = slackReq.trigger_id;
   const engineerOptions = await exports.getEngineersAsOptions();
 
