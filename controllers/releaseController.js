@@ -144,24 +144,20 @@ exports.addRelease = async (name, date, responseUrl) => {
     backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
   };
   const release = await (new Release(releaseData).save());
-  const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:`;
+  const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
 
   const slackResponse = await exports.displayRelease(release.id, responseUrl, title);
 
   // create reminders for engineers
-  const reminderText = `Release ${name} starts at 9PM. You're on call :slightly_smiling_face:`;
-  const reminder = await reminders.createReminders(release.date, reminderText, [...engineersAssigned.primaryEngineers, ...engineersAssigned.backupEngineers], responseUrl);
+  // const reminderText = `Release ${name} starts at 9PM. You're on call :slightly_smiling_face:`;
+  // const reminder = await reminders.createReminders(release.date, reminderText, [...engineersAssigned.primaryEngineers, ...engineersAssigned.backupEngineers], responseUrl);
+    const reminder = await reminders.createReminders(release, engineersAssigned.primaryEngineers, engineersAssigned.backupEngineers, responseUrl);
 
-  const updatedReleses = await rotation.updateFutureReleases(release);
+  const updatedReleases = await rotation.updateFutureReleases(release);
   // const updatedReleases = await exports.updateReleaseEngineers(release);
 
   return slackResponse;
 };
-
-// exports.updateReleaseEngineers = async (release) => {
-//   const updated = await rotation.updateFutureReleases(release);
-
-// };
 
 exports.assignEngineerToRelease = async (slackReq) => {
   const releaseName = slackReq.state;
@@ -176,10 +172,14 @@ exports.assignEngineerToRelease = async (slackReq) => {
   const release = await Release.findOneAndUpdate({ name: releaseName }, { $push: updatedRelease }, { new: true }).exec();
 
   // create a reminder for that engineer
-  const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
-  const reminder = await reminders.createReminders(release.date, reminderText, [engineer], slackReq.response_url);
+  // const reminderText = `Release ${releaseName} starts in one hour. You're ${fieldName === 'primaryEngineers' ? 'on call' : 'a backup'} :slightly_smiling_face:`;
+  const primaryArray = fieldName === 'primaryEngineers' ? [engineer] : [];
+  const backupArray = fieldName === 'primaryEngineers' ? [] : [engineer];
+  const reminder = await reminders.createReminders(release, primaryArray, backupArray, slackReq.response_url);
 
   exports.displayRelease(release.id, slackReq.response_url, title);
+
+  const updatedReleases = await rotation.updateFutureReleases(release);
 };
 
 exports.removeEngineerFromRelease = async (slackReq) => {
@@ -211,5 +211,8 @@ exports.removeEngineerFromRelease = async (slackReq) => {
 
   // delete release reminders for these engineers
   const reminderReponse = await reminders.deleteReminders([primary, backup], release.date, slackReq.response_url);
+
+  // update assignments to future releases
+  const updatedReleases = await rotation.updateFutureReleases(release);
   return;
 };

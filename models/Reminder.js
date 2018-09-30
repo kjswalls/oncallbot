@@ -18,7 +18,8 @@ const reminderSchema = new Schema({
   time: {
     type: Date,
     required: 'Please supply a time',
-    default: Date.now
+    default: Date.now,
+    expires: 0,
   },
 });
 

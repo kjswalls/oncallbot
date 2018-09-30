@@ -14,6 +14,7 @@ exports.handleActions = async (req, res) => {
     text: 'Oops, something went wrong',
   };
   let errors = null;
+  let buttonPressed = null;
 
   /**
    * Different callback IDs correspond to different inputs from Slack.
@@ -35,27 +36,22 @@ exports.handleActions = async (req, res) => {
       return response;
 
     case 'add_release': // "Add Release" button pressed
-      const selectButtonPressed = slackReq.actions[0].value;
-      if (selectButtonPressed === 'add_release') {
+      buttonPressed = slackReq.actions[0].value;
+      if (buttonPressed === 'add_release') {
         res.send('');
         response = await releases.renderAddReleaseModal(slackReq);
         return response;
       }
-      // if (selectButtonPressed === 'release_history') {
-      //   res.send('');
-      //   response = await releases.displayHistory(slackReq);
-      //   return response;
-      // }
     break;
 
     case 'back_to_select_or_manage_pool': // release selected to view from initial menu
-      const optionsButtonPressed = slackReq.actions[0].value;
-      if (optionsButtonPressed === 'back_to_select') {
+      buttonPressed = slackReq.actions[0].value;
+      if (buttonPressed === 'back_to_select') {
         res.send('');
         response = await slash.selectRelease(slackReq);
         return response;
       }
-      if (optionsButtonPressed === 'manage_pool') {
+      if (buttonPressed === 'manage_pool') {
         res.send('');
         const backToRelease = slackReq.original_message.attachments[0].title;
         const manageTitle = 'Pool of engineers available for releases:';
@@ -91,35 +87,28 @@ exports.handleActions = async (req, res) => {
       return response;
 
     case 'edit_release_or_view_history':
-      const editButtonPressed = slackReq.actions[0].value;
-      if (editButtonPressed === 'edit_release') {
+      buttonPressed = slackReq.actions[0].value;
+      if (buttonPressed === 'edit_release') {
         res.send('');
         response = await releases.renderEditReleaseModal(slackReq);
         return response;
       }
-      if (editButtonPressed === 'release_history') {
+      if (buttonPressed === 'release_history') {
         res.send('');
         const previous = slackReq.original_message.attachments[0].title;
         response = await releases.displayHistory(slackReq, previous);
         return response;
       }
-      // if (editButtonPressed === 'manage_pool') {
-      //   res.send('');
-      //   const backToRelease = slackReq.original_message.attachments[0].title;
-      //   const manageTitle = 'Pool of engineers available for releases:';
-      //   response = await engineers.displayPool(slackReq.response_url, backToRelease, manageTitle);
-      //   return response;
-      // }
       break;
 
     case 'add_or_remove_engineers_from_pool':
-      const manageButtonPressed = slackReq.actions[0].value;
-      if (manageButtonPressed === 'add_engineer_to_pool') {
+      buttonPressed = slackReq.actions[0].value;
+      if (buttonPressed === 'add_engineer_to_pool') {
         res.send('');
         response = await engineers.renderAddEngineerModal(slackReq);
         return response;
       }
-      if (manageButtonPressed === 'remove_engineer_from_pool') {
+      if (buttonPressed === 'remove_engineer_from_pool') {
         res.send('');
         response = await engineers.renderRemoveEngineerFromPoolModal(slackReq);
         return response;
@@ -143,13 +132,13 @@ exports.handleActions = async (req, res) => {
       return response;
 
     case 'assign_or_remove_engineer': // buttons for adding or removing an engineer from a release
-      const releaseButtonPressed = slackReq.actions[0].value;
-      if (releaseButtonPressed === 'assign_engineer_to_release') {
+      buttonPressed = slackReq.actions[0].value;
+      if (buttonPressed === 'assign_engineer_to_release') {
         res.send('');
         response = await engineers.renderAssignEngineerModal(slackReq);
         return response;
       }
-      if (releaseButtonPressed === 'remove_engineer_from_release') {
+      if (buttonPressed === 'remove_engineer_from_release') {
         res.send('');
         response = await engineers.renderRemoveEngineerFromReleaseModal(slackReq);
         return response;

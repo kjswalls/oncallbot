@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const releases = require('./releaseController');
 const reminders = require('./reminderController');
+const rotation = require('../handlers/rotation');
 const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 
@@ -135,8 +136,12 @@ exports.oncall = async (req, res) => {
         slackResponse = await releases.displayRelease(updatedRelease.id, responseUrl, title);
 
         // add reminders for engineers
-        const reminderText = `Release ${releaseName} starts at 9PM. You're on call :slightly_smiling_face:`;
-        const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers ? primaryEngineers : [], ...backupEngineers ? backupEngineers : []], responseUrl);
+        const reminderText = `Release ${releaseName} starts in one hour. You're on call :slightly_smiling_face:`;
+        // const reminder = await reminders.createReminders(release.date, reminderText, [...primaryEngineers ? primaryEngineers : [], ...backupEngineers ? backupEngineers : []], responseUrl);
+        const reminder = await reminders.createReminders(release, primaryEngineers, backupEngineers, responseUrl);
+
+        // update engineer assignments for future releases
+        const updatedReleases = await rotation.updateFutureReleases(release);
 
         return slackResponse;
       }
@@ -160,7 +165,7 @@ exports.oncall = async (req, res) => {
       return slackResponse;
 
   } else { // unknown command
-    res.send('Sorry, I didn\'t understand that command. Please try again!');
+    res.send('Sorry, I didn\'t understand that command. Please try again! Use `/oncall help` to see what commands are available.');
     return;
   }
 };

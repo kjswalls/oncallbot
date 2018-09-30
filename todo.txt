@@ -8,12 +8,9 @@ Add option to remove engineers from the pool
 Add option to view history of release assignments?
 
 // To-Do
-Add option to set/remove reminders for releases?
+Add validation so releases can only be added / assigned in the future
 Add remove command for multiple removals at once?
 Add help command
 Make readme
 Remove random cruft files (babel?)
-
 Add slack Signing Secrets verification
-Find out if we really need to return slackResponse all the time inside releaseMethods and engineerMethods
-Find out if we really need awaits on all the calls in actionController

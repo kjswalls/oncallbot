@@ -5,17 +5,64 @@ const messages = require('../handlers/messages');
 const Reminder = mongoose.model('Reminder');
 const RELEASE_REMINDER_HOUR = '20'; // 8 PM
 
-exports.createReminders = async (date, text, users, responseUrl) => {
-  const timestamp = new Date(date).setHours(RELEASE_REMINDER_HOUR).valueOf();
+// as of 9/29/18 it's not currently possible to create a channel reminder via the slack API.
+// I'm gonna leave this method here just in case they add that in the future, though.
+exports.createChannelReminder = async (release, responseUrl, channelId) => {
+  const timestamp = new Date(release.date).setHours(RELEASE_REMINDER_HOUR).valueOf();
   const seconds = Math.floor(timestamp / 1000); // timestamp is in milliseconds
+  const primaryAtMentions = release.primaryEngineers.map(eng => `<@${eng.slackId}>`);
+  const backupAtMentions = release.backupEngineers.map(eng => `<@${eng.slackId}>`);
 
-  const reminderInputs = users.map((user) => {
-    return {
-      text,
-      time: seconds,
-      user: user.slackId,
-    };
-  });
+  const text = `#${channelId} Release ${release.name} starts in one hour! ${primaryAtMentions.join(' ')} you're on call. ${backupAtMentions.join(' ')} you're on backup. :slightly_smiling_face:`;
+
+  const reminderInput = {
+    text,
+    time: seconds,
+    user: channelId,
+  };
+
+  const slackResponse = await utils.postToSlack('https://slack.com/api/reminders.add', reminderInput);
+  return slackResponse;
+};
+
+exports.createReminders = async (release, primaries, backups, responseUrl) => {
+  const timestamp = new Date(release.date).setHours(RELEASE_REMINDER_HOUR).valueOf();
+  const seconds = Math.floor(timestamp / 1000); // timestamp is in milliseconds
+  const primaryText = `Release ${release.name} starts in one hour. You're *on call* :slightly_smiling_face:`;
+  const backupText = `Release ${release.name} starts in one hour. You're on *backup* :slightly_smiling_face:`;
+  let users = [...primaries ? primaries : [], ...backups ? backups : []];
+  let primaryInputs = [];
+  let backupInputs = [];
+
+  if (primaries) {
+    primaryInputs = primaries.map(eng => {
+      return {
+        text: primaryText,
+        time: seconds,
+        user: eng.slackId,
+      };
+    });
+  }
+
+  if (backups) {
+    backupInputs = backups.map(eng => {
+      return {
+        text: backupText,
+        time: seconds,
+        user: eng.slackId,
+      };
+    });
+  }
+
+  // const reminderInputs = users.map((user) => {
+  //   return {
+  //     text,
+  //     time: seconds,
+  //     user: user.slackId,
+  //   };
+  // });
+
+  const reminderInputs = [...primaryInputs, ...backupInputs];
 
   const postPromises = reminderInputs.map((reminderInput) => utils.postToSlack('https://slack.com/api/reminders.add', reminderInput));
   const slackResponses = await Promise.all(postPromises);
@@ -41,7 +88,7 @@ exports.createReminders = async (date, text, users, responseUrl) => {
     }
     const message = messages.createReminderError(reason);
     console.log('create reminder error', slackResponses);
-    const errorResponse = await utils.postToSlack(responseUrl, message);
+    const errorResponse = await utils.postToSlack(responseUrl, message, true);
   }
 
   
