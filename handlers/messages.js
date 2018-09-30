@@ -29,12 +29,6 @@ exports.selectRelease = (releaseOptions, title) => {
             type: 'button',
             value: 'add_release',
           },
-          // {
-          //   name: 'release_history_button',
-          //   text: 'Release history',
-          //   type: 'button',
-          //   value: 'release_history',
-          // },
         ],
       },
     ],
@@ -159,18 +153,6 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
             type: 'button',
             value: 'release_history',
           },
-          // {
-          //   name: 'add_engineer_button',
-          //   text: 'Add an engineer to the pool',
-          //   type: 'button',
-          //   value: 'add_engineer',
-          // },
-          // {
-          //   name: 'manage_pool_button',
-          //   text: 'Manage the engineer pool',
-          //   type: 'button',
-          //   value: 'manage_pool',
-          // },
         ],
       },
       {
@@ -186,12 +168,6 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
             type: 'button',
             value: 'back_to_select',
           },
-          // {
-          //   name: 'release_history_button',
-          //   text: 'Last 3 releases',
-          //   type: 'button',
-          //   value: 'release_history',
-          // },
           {
             name: 'manage_pool_button',
             text: 'Manage the engineer pool',
@@ -603,6 +579,50 @@ exports.deleteReminderError = (reason) => {
   const message = {
     // response_type: 'in_channel',
     text: `There was a problem deleting a reminder for the user(s) you removed. :disappointed: ${reason}`,
+  };
+
+  return message;
+};
+
+exports.help = () => {
+  const message = {
+    response_type: 'in_channel',
+    attachments: [
+      {
+        fallback: `Pool of engineers available for releases`,
+        color: '#E8E8E8',
+        pretext: 'Hello! :wave: Need some help with `/oncall`?',
+        title: '',
+        text: 'Use `/oncall` to assign people to releases, edit those assignments, and find out who\'s on call. For example:',
+        fields: [
+          {
+              title: '',
+              value: '• `/oncall 18.9.1` to add a release or view an existing release\'s info',
+              "short": false
+          },
+          {
+            title: '',
+            value: '• `/oncall 18.9.1 -o @willem.jager -b @hai.phan @jonathan.anstett` to assign Willem as on call, Hai and Jonathan as backups',
+            "short": false
+          },
+          {
+            title: '',
+            value: '• `/oncall 18.9.1 -r @kirby.walls @renee.gallison` to remove people from a release',
+            "short": false
+          },
+          {
+            title: '',
+            value: '• `/oncall 18.9.1 9/7/18` to quickly add a release',
+            "short": false
+          },
+          {
+            title: '',
+            value: 'You can also use the `/oncall` command by itself to do all of that via the GUI. \nSelect a release to view from the dropdown, and then use the buttons to edit the release\'s info, assign and remove engineers, view previous releases, and manage the pool of available engineers. For more info, check out the readme: http://www.google.com',
+            "short": false
+          },
+        ],
+      },
+    ]
   };
 
   return message;

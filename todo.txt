@@ -7,10 +7,10 @@ Add option to view list of engineers in the pool
 Add option to remove engineers from the pool
 Add option to view history of release assignments?
 Add validation so releases can only be added in the future
-
-// To-Do
 Add remove command for multiple removals at once?
 Add help command
+
+// To-Do
 Make readme
 Remove random cruft files (babel?)
 Add slack Signing Secrets verification

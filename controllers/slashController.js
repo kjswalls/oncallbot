@@ -26,6 +26,8 @@ exports.oncall = async (req, res) => {
   // `/oncall 18.9.1 9/7/18`
   const addReleaseRegEx = /(\d\d\.\d{1,2}\.\d{1})( ([1-9]|0[1-9]|1[012])[- /.]([1-9]|0[1-9]|[12][0-9]|3[01])[- /.]((19|20)\d\d|\d\d))/;
 
+  const helpRegEx = /(^help$)/;
+
   if (text === '') { // select a release: `/oncall`
     res.send('');
     slackResponse = await exports.selectRelease(slackReq);
@@ -155,7 +157,7 @@ exports.oncall = async (req, res) => {
         return slackResponse;
       }
 
-  } else if (removeEngineersRegEx.test(text)) { // add new release: `/oncall 18.9.1 9/7/18`
+  } else if (removeEngineersRegEx.test(text)) { // remove people from release: `/oncall 18.9.1 -r @kirby.walls @renee.gallison`
   console.log('REMOVE regex matched');
   res.send('Got it! Loading...');
   const matches = removeEngineersRegEx.exec(text);
@@ -204,7 +206,14 @@ exports.oncall = async (req, res) => {
       slackResponse = await releases.addRelease(releaseName, releaseDate, slackReq.response_url);
       return slackResponse;
 
-  } else { // unknown command
+  } else if (helpRegEx.test(text)) { // ask for help: `/oncall help`
+  res.send('');
+  console.log('HELP regex matched');
+  const message = messages.help();
+  slackResponse = await utils.postToSlack(slackReq.response_url, message, true);
+  return slackResponse;
+
+} else { // unknown command
     res.send('Sorry, I didn\'t understand that command. Please try again. Use `/oncall help` to see which commands are available.');
     return;
   }
