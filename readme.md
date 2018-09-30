@@ -125,19 +125,10 @@ Once you've selected a release to work with, click the **Manage the engineer poo
 
 ---
 
-## Installation
-
-### Requirements
-* Linux
-* Python 3.3 and up
-
-`$ pip install foobar`
-
 ## Development
 ```
-$ virtualenv foobar
-$ . foobar/bin/activate
-$ pip install -e .
+$ cd /oncallbot
+$ npm run watch
 ```
 
 ## Credits
