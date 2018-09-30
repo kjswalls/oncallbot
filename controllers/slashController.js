@@ -148,10 +148,20 @@ exports.oncall = async (req, res) => {
 
   } else if (addReleaseRegEx.test(text)) { // add new release: `/oncall 18.9.1 9/7/18`
       console.log('ADD regex matched');
-      res.send('');
       const matches = addReleaseRegEx.exec(text);
       const releaseName = matches[1];
       const releaseDate = matches[2];
+
+      // validate release info
+      const errors = {
+        errors: releases.validateReleaseInfo({ name: releaseName, date: releaseDate }),
+      };
+
+      if (errors.errors.length) {
+        return res.send('To create a new release, you must enter a date in the future. Please try again.')
+      }
+
+      res.send('');
       const release = await releases.getReleaseByName(releaseName);
 
       // if release exists, open dialog for editing release
@@ -165,7 +175,7 @@ exports.oncall = async (req, res) => {
       return slackResponse;
 
   } else { // unknown command
-    res.send('Sorry, I didn\'t understand that command. Please try again! Use `/oncall help` to see what commands are available.');
+    res.send('Sorry, I didn\'t understand that command. Please try again! Use `/oncall help` to see which commands are available.');
     return;
   }
 };

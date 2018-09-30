@@ -14,6 +14,14 @@ exports.validateReleaseInfo = (formData) => {
   const date = formData.date;
   const errors = [];
 
+  // if date is in the past, reject it
+  if (new Date(date) < Date.now()) {
+    errors.push({
+      name: 'date',
+      error: 'Sorry, you must enter a date in the future'
+    });
+  }
+
   // validate name format
   const nameRegEx = /(^\d\d\.\d{1,2}\.\d{1}$)/;
   if (!nameRegEx.test(name)) {
@@ -134,7 +142,6 @@ exports.editRelease = async (slackReq) => {
   exports.displayRelease(updatedRelease._id, slackReq.response_url, title);
 };
 
-// TODO: add validation so that releases can only be added in the future
 exports.addRelease = async (name, date, responseUrl) => {
   const engineersAssigned = await rotation.assignEngineers(name);
   const releaseData = {
