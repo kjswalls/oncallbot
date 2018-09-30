@@ -134,14 +134,14 @@ exports.deleteReminders = async (engineerIds, date, responseUrl) => {
     const deleted = await Promise.all(deletePromises);
     return deleted;
   } else {
-    let reason = 'Please try the `/remind list` command to delete it manually!';
+    let reason = 'Please try the `/remind list` command to delete it manually.';
     // try to send helpful error messages
     if (slackResponses && slackResponses[0].error) {
       reason = `Error: ${slackResponses[0].error}`;
     }
     const message = messages.deleteReminderError(reason);
     console.log('delete reminder error: ', slackResponses);
-    const errorResponse = await utils.postToSlack(responseUrl, message);
+    const errorResponse = await utils.postToSlack(responseUrl, message, true);
   }
 
   return;

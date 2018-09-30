@@ -223,3 +223,37 @@ exports.removeEngineerFromRelease = async (slackReq) => {
   const updatedReleases = await rotation.updateFutureReleases(release);
   return;
 };
+
+exports.removeEngineersFromRelease = async (releaseName, engineers, responseUrl) => {
+  // find engineers by their slack Ids
+  const slackIdRegEx = /(?<=<@)\w*(?=|)/g;
+  const slackIds = engineers.match(slackIdRegEx);
+  const engineerObjs = await Engineer.find({ slackId: { $in: slackIds }});
+  const engIds = engineerObjs.map(eng => eng.id);
+
+  // find engineers in primary or backup arrays, remove them
+  const release = await Release.findOneAndUpdate(
+    { name: releaseName },
+    { $pull: { primaryEngineers: { $in: engIds }, backupEngineers: { $in: engIds }}},
+    { new: true }
+  );
+
+  // find engineers and decrement their weights
+  const engUpdatePromises = engIds.map(id => {
+    const updatedEng = Engineer.findOneAndUpdate({ _id: id }, { $inc: { weight: -1 }}, { new: true });
+    return updatedEng;
+  });
+
+  const namesRemoved = engineerObjs.map(eng => eng.name);
+  const updatedEngineers = await Promise.all(engUpdatePromises);
+
+  const title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;
+  exports.displayRelease(release._id, responseUrl, title);
+
+  // delete release reminders for these engineers
+  const reminderReponse = await reminders.deleteReminders(engIds, release.date, responseUrl);
+
+  // update assignments to future releases
+  const updatedReleases = await rotation.updateFutureReleases(release);
+  return;
+};

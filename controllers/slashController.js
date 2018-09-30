@@ -19,6 +19,9 @@ exports.oncall = async (req, res) => {
 
   // `/oncall 18.9.1 -o <@U7WQ2BVNK|kjswalls> -b <@U7WQ2BVNK|wjager>`
   const assignEngineersRegEx = /(^\d\d\.\d{1,2}\.\d{1}) (-[ob]) ((<@(\w+)(\|(\w+))?>)(( (<@)(\w+)(\|(\w+))?>)*))( (-[ob]) ((<@(\w+)(\|(\w+))?>)(( (<@)(\w+)(\|(\w+))?>)*)))?/;
+
+  // `/oncall 18.9.1 -r <@U7WQ2BVNK|kjswalls> <@U7WQ2BVNK|wjager>`
+  const removeEngineersRegEx = /(^\d\d\.\d{1,2}\.\d{1}) (-[r]) ((<@(\w+)(\|(\w+))?>)(( (<@)(\w+)(\|(\w+))?>)*))?/;
   
   // `/oncall 18.9.1 9/7/18`
   const addReleaseRegEx = /(\d\d\.\d{1,2}\.\d{1})( ([1-9]|0[1-9]|1[012])[- /.]([1-9]|0[1-9]|[12][0-9]|3[01])[- /.]((19|20)\d\d|\d\d))/;
@@ -84,8 +87,11 @@ exports.oncall = async (req, res) => {
           // use the slackIdRegex to get an array of their slack IDs
           const primarySlackIds = onCall.match(slackIdRegEx);
 
+          // remove duplicate if any engineer is being added twice
+          const deDuped = [...new Set(primarySlackIds)];
+
           // check primarys already assigned to the release to remove slackIds of engineers already assigned
-          const primarysToAdd = primarySlackIds.filter((slackId) => {
+          const primarysToAdd = deDuped.filter((slackId) => {
             return !existingSlackIds.includes(slackId);
           });
 
@@ -102,8 +108,11 @@ exports.oncall = async (req, res) => {
           // if there were any matches for backup engineers, use the slackIdRegex to get an array of their slack IDs
           const backupSlackIds = backup.match(slackIdRegEx);
 
+          // remove duplicate if any engineer is being added twice
+          const deDuped = [...new Set(backupSlackIds)];
+
           // check backups already assigned to the release to remove slackIds of engineers already assigned
-          const backupsToAdd = backupSlackIds.filter((slackId) => {
+          const backupsToAdd = deDuped.filter((slackId) => {
             return !existingSlackIds.includes(slackId);
           });
 
@@ -146,6 +155,27 @@ exports.oncall = async (req, res) => {
         return slackResponse;
       }
 
+  } else if (removeEngineersRegEx.test(text)) { // add new release: `/oncall 18.9.1 9/7/18`
+  console.log('REMOVE regex matched');
+  res.send('Got it! Loading...');
+  const matches = removeEngineersRegEx.exec(text);
+  const releaseName = matches[1];
+
+  // get the engineers we're supposed to remove
+  const engineers = matches[3];
+  const release = await releases.getReleaseByName(releaseName);
+
+  // if release doesn't exist, open dialog for adding release
+  if (!release) {
+    slackResponse = await releases.renderAddReleaseModal(slackReq, releaseName);
+    return slackResponse;
+
+  // if release exists
+  } else {
+    await releases.removeEngineersFromRelease(releaseName, engineers, slackReq.response_url);
+    return;
+  }
+
   } else if (addReleaseRegEx.test(text)) { // add new release: `/oncall 18.9.1 9/7/18`
       console.log('ADD regex matched');
       const matches = addReleaseRegEx.exec(text);
@@ -175,7 +205,7 @@ exports.oncall = async (req, res) => {
       return slackResponse;
 
   } else { // unknown command
-    res.send('Sorry, I didn\'t understand that command. Please try again! Use `/oncall help` to see which commands are available.');
+    res.send('Sorry, I didn\'t understand that command. Please try again. Use `/oncall help` to see which commands are available.');
     return;
   }
 };
