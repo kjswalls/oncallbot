@@ -150,9 +150,14 @@ exports.addRelease = async (name, date, responseUrl) => {
     primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
     backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
   };
-  const release = await (new Release(releaseData).save());
-  const title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
+  let release = await (new Release(releaseData).save());
 
+  let title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
+  if (!release) {
+    title = `Release *${releaseData.name}* already exists.`;
+    release = await Release.findOne({ name });
+  }
+  
   const slackResponse = await exports.displayRelease(release.id, responseUrl, title);
 
   // create reminders for engineers
@@ -247,7 +252,11 @@ exports.removeEngineersFromRelease = async (releaseName, engineers, responseUrl)
   const namesRemoved = engineerObjs.map(eng => eng.name);
   const updatedEngineers = await Promise.all(engUpdatePromises);
 
-  const title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;
+  let title = `No engineers removed. *${namesRemoved.join(', ')}* not assigned to this release.`;
+
+  if (namesRemoved.length) {
+    title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;
+  }
   exports.displayRelease(release._id, responseUrl, title);
 
   // delete release reminders for these engineers

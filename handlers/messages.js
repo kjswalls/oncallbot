@@ -617,11 +617,21 @@ exports.help = () => {
           },
           {
             title: '',
-            value: 'You can also use the `/oncall` command by itself to do all of that via the GUI. \nSelect a release to view from the dropdown, and then use the buttons to edit the release\'s info, assign and remove engineers, view previous releases, and manage the pool of available engineers. For more info, check out the readme: http://www.google.com',
+            value: 'You can also use the `/oncall` command by itself to do all of that via the GUI. \nSelect a release to view from the dropdown, and then use the buttons to edit the release\'s info, assign and remove engineers, view previous releases, and manage the pool of available engineers.',
             "short": false
           },
         ],
       },
+      {
+        'fallback': 'Check out the readme for this app',
+        'actions': [
+          {
+            'type': 'button',
+            'text': 'More info :bulb:',
+            'url': 'https://github.com/kjswalls/oncallbot/blob/master/readme.md'
+          }
+        ]
+      }
     ]
   };
 

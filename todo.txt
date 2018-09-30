@@ -12,6 +12,13 @@ Add help command
 
 // To-Do
 Make readme
+Add logic for updating reminders when release date is updated
 Remove random cruft files (babel?)
 Add slack Signing Secrets verification
-Add validation so releases can only be added in the future
+Try and remove mongoose warnings
+Update .env sample files
+Remove unnecessary packages from package.json
+Set up logging?
+Refactor / clean up
+Make usable by multiple pods?
+Add validation so releases can only be assigned in the future
