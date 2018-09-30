@@ -31,7 +31,7 @@ This command will display the information for the release named **18.9.1** if ex
 
 #### Use the GUI:
 
-Once you've selected a release to view, click the **Assign engineer** button to open a modal for assigning an engineer. Choose the engineer's name from the dropdown, and then decide whether you're assigning them as _on call_ or _backup_. In order to assign someone to a release, that person needs to have already been added to the pool of available engineers. See [Add an engineer to the pool](#Add-an-engineer-to-the-pool)
+Once you've selected a release to view, click the **Assign engineer** button to open a modal for assigning an engineer. Choose the engineer's name from the dropdown, and then decide whether you're assigning them as _on call_ or _backup_. In order to assign someone to a release, that person needs to have already been added to the pool of available engineers. See [Add an engineer to the pool](#add-an-engineer-to-the-pool)
 
 Using the GUI only allows for assigning one engineer at a time.
 
@@ -111,7 +111,7 @@ If you're trying to edit a release's assignments, sometimes it's helpful to see 
 
 ### Manage the Pool of Engineers
 
-Engineers are only assignable to a release if they've been added to the pool. This is to ensure that On Call Bot knows the discipline (frontend or backend) and pod that each engineer belongs to, so it can assign engineers to releases automatically. See [Automatic Assignment](#Automatic-assignment)
+Engineers are only assignable to a release if they've been added to the pool. This is to ensure that On Call Bot knows the discipline (frontend or backend) and pod that each engineer belongs to, so it can assign engineers to releases automatically. See [Automatic Assignment](#automatic-assignment)
 
 #### Add an engineer to the pool:
 
@@ -139,8 +139,6 @@ $ virtualenv foobar
 $ . foobar/bin/activate
 $ pip install -e .
 ```
-
-![Gif illustrating the /oncall X.X.X command usage](http://i.imgur.com/LOquDqI.gif)
 
 ## Credits
 The robot icon the app uses was made by [Darius Dan](https://www.flaticon.com/authors/darius-dan) from [www.flaticon.com](https://www.flaticon.com/) and is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/). Thank you Darius Dan and FlatIcon!
