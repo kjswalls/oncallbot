@@ -12,9 +12,9 @@ It's meant to replace the spreadsheet we've been using to keep track of whose tu
 
 ### Table of Contents  
 [How To Use](#how-to-use)  
-[Automatic Assignment](#automatic-assignment)
-[Development](#development)
-[Credits](#credits)
+[Automatic Assignment](#automatic-assignment)  
+[Development](#development)  
+[Credits](#credits)  
 [License](#license)
 
 ## How To Use
@@ -160,7 +160,30 @@ Once you've selected a release to work with, click the **Manage the engineer poo
 </details>
 
 ## Automatic Assignment
+When you create a release, the app automatically assigns engineers to that release based on some rules:
+* Each release must have two front end and two back end engineers assigned (1 primary and 1 backup for each discipline)
+* Primary and backup engineers should be on different pods
+* Try to make sure each engineer is assigned to an equal share of releases
 
+To try and appease that last rule, the app gives each engineer a "weight," which is just a number corresponding to how many releases they've been assigned to. Right now, it uses equal weighting for On Call assignments and Backup assignments. When an engineer is assigned to a release, their weight is incremented by 1. If they're removed from a release, their weight is decremented by 1.
+
+The logic for a release assignment operation goes like this:
+1. Get the frontend with the lowest weight, assign them as On Call
+2. Get the frontend with the second-lowest weight who's not on the same pod, assign them as Backup
+3. Repeat steps 1 and 2 for backends
+4. Increment the weights of the assigned engineers
+5. Save the release
+
+After that, it updates the assigned engineers for any future releases using the same steps, since the lowest weights will have changed. It also does this any time we assign or remove engineers from a release.
+
+This system isn't perfect for a few reasons, one of which is that if we have only 3 frontend or backend engineers in the group (currently the case if we consider on-site frontends only), one engineer is going to end up at a much higher weight than the other two, and therefore be assigned to every single release as the Backup. 
+
+>This is because it goes: 
+>  First release: Hai is primary (lowest weight), Renee is backup (opposite pod). 
+>  Next release: Kirby is primary (lowest weight), Renee is backup (opposite pod). 
+>  Next release: Hai is primary (lowest weight), Renee is backup (opposite pod). 
+
+Anyway, I think it's still a good starting point, because we can still edit release assignments manually. Also, if we include off-site frontends, this problem might be fixed. If anyone has thoughts about how the automatic rotation should work, let me know!
 
 ## Development
 
