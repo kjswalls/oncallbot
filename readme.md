@@ -178,10 +178,11 @@ After that, it updates the assigned engineers for any future releases using the 
 
 This system isn't perfect for a few reasons, one of which is that if we have only 3 frontend or backend engineers in the group (currently the case if we consider on-site frontends only), one engineer is going to end up at a much higher weight than the other two, and therefore be assigned to every single release as the Backup. 
 
->This is because it goes: 
->  First release: Hai is primary (lowest weight), Renee is backup (opposite pod). 
->  Next release: Kirby is primary (lowest weight), Renee is backup (opposite pod). 
->  Next release: Hai is primary (lowest weight), Renee is backup (opposite pod). 
+>This is because the sequence is:  
+>  First release: Hai is primary (lowest weight), Renee is backup (opposite pod).  
+>  Next release: Kirby is primary (lowest weight), Renee is backup (opposite pod).  
+>  Next release: Hai is primary (lowest weight), Renee is backup (opposite pod).  
+>  Etc.
 
 Anyway, I think it's still a good starting point, because we can still edit release assignments manually. Also, if we include off-site frontends, this problem might be fixed. If anyone has thoughts about how the automatic rotation should work, let me know!
 
