@@ -2,16 +2,20 @@
 
 A Slack app to help the Consumer Services group at ZapLabs assign engineers to be "on call" for monolith release nights in case anything breaks. 🤙🤖
 
-It's meant to replace the spreadsheet table we've been using to keep track of whose turn it is to be online for a release. Some nice features:
+It's meant to replace the spreadsheet we've been using to keep track of whose turn it is to be online for a release. Some nice features:
 * Can automatically assign engineers to a release
 * Creates reminders for anyone assigned to a release
+* Can't remember if you're on call tonight? No need to find the wiki, just type `/oncall` to find out
 * Never leave Slack! The dream
 
 ![Gif illustrating basic /oncall command usage](http://i.imgur.com/rounAl8.gif)
 
 ### Table of Contents  
-[Headers](#headers)  
-[Emphasis](#emphasis) 
+[How To Use](#how-to-use)  
+[Automatic Assignment](#automatic-assignment)
+[Development](#development)
+[Credits](#credits)
+[License](#license)
 
 ## How To Use
 
@@ -155,14 +159,60 @@ Once you've selected a release to work with, click the **Manage the engineer poo
 </p>
 </details>
 
+## Automatic Assignment
+
+
 ## Development
+
+First, clone / download the repo. 😊 Use the `variables.env.sample` to create a `variables.env` file to set environment variables (and do the same with the `variables.env.now.sample` file if you're going to deploy with Now).
+
+To test this bot locally, you'll need to create a Slack App in a workspace you can test with. It's super quick; their docs are [here](https://api.slack.com/slack-apps#creating_apps)
+
+You'll also need some way for your Slack App to make requests to the bot's Node / Express server while it's running locally, so you can test changes quickly. I used [localtunnel](https://www.npmjs.com/package/localtunnel) (wrapped by the super handy [localtunnel-restarter](https://github.com/kirillshevch/localtunnel-restarter) package to auto-restart LT when it crashes), but you can also use [ngrok](https://ngrok.com/) or any other cool wizardry.
+
+Start the Express server like this:
+
 ```
-$ cd /oncallbot
-$ npm run watch
+$ cd oncallbot
+$ npm run dev
 ```
+
+And make it available on the web like this (in another terminal session):
+
+```
+$ localtunnel-restarter --port 7777 --subdomain oncallbot
+```
+
+Then you'll need to set up **Interactive Components**, **Slash Commands**, and **Permissions** for the Slack App.
+
+### Interactive Components
+
+The main thing here is the Request URL. The Express server expects actions from interactive components to be sent to the `/slack/actions` route, so if you're using localtunnel as detailed above, you should set the Request URL in the Slack App dashboard to be `https://oncallbot.localtunnel.me/slack/actions`.
+
+### Slash Commands
+
+Likewise, you'll need to create the Slash command `/oncall` in the Slack App dashboard with the Request URL: `https://oncallbot.localtunnel.me/slack/command/oncall` (if you're using localtunnel).
+
+### Permissions
+
+The app needs the following Permission Scopes, set in the **OAuth and Permissions** tab of the Slack dashboard:
+* chat:write:user
+* commands
+* reminders:write
+* users:read
+
+Then you need to save some Slack tokens to the `variables.env` file in the repo:
+1. Get the **OAuth Access Token** from the **Install App** page of the Slack dashboard, and set it as the SLACK_ACCESS_TOKEN environment variable.
+2. Get the **Verification Token** from the **Basic Information page of the dashboard and set it as the SLACK_VERIFICATION_TOKEN.
+
+Now the Slack App should be good to go! You just need to set up a MongoDB database with an admin user. I used [mLab](https://mlab.com/) to host the database, but you can also run one locally. Either way, grab the connection string and save it as the DATABASE env variable: `DATABASE=mongodb://USERNAME:PASSWORD@abc123.mlab.com:77777/on-call-bot`
+
+Finally you're ready to start using the app! The `dev` script in package.json uses `nodemon` to hot-reload when you save changes to a file and `ndb` to debug the JavaScript. It runs on port 7777 by default (specified in `variables.env`).
+
+Now you should be able to talk to the app in one of your Slack workspace's channels with the `/oncall` command.
 
 ## Credits
 The robot icon the app uses was made by [Darius Dan](https://www.flaticon.com/authors/darius-dan) from [www.flaticon.com](https://www.flaticon.com/) and is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/). Thank you Darius Dan and FlatIcon!
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+[MIT](https://choosealicense.com/licenses/mit/) © 2018 Kirby Walls
