@@ -118,7 +118,7 @@ exports.renderEditReleaseModal = async (slackReq) => {
   console.log('edit release', slackReq);
   const releaseName = slackReq.original_message.attachments[0].title;
   const release = await exports.getReleaseByName(releaseName);
-  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' });
+  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', timeZone: 'America/Tijuana' });
 
   const dialog = messages.editReleaseModal(slackReq.trigger_id, releaseName, releaseDate, release._id);
 
@@ -146,7 +146,7 @@ exports.addRelease = async (name, date, responseUrl) => {
   const engineersAssigned = await rotation.assignEngineers(name);
   const releaseData = {
     name,
-    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric' }),
+    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric', timeZone: 'America/Tijuana' }),
     primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
     backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
   };

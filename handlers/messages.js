@@ -54,7 +54,7 @@ exports.displayHistory = (releases, backToRelease, limit, channel, user) => {
       color: 'good',
       pretext: '',
       title: release.name,
-      text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US')}\n`,
+      text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US', { timeZone: 'America/Tijuana' })}\n`,
       fields: [
           {
               title: 'On call:',
@@ -112,7 +112,7 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
         color: 'good',
         pretext: title,
         title: release.name,
-        text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US')}\n`,
+        text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US', { timeZone: 'America/Tijuana' })}\n`,
         fields: [
             {
                 title: 'On call:',

@@ -54,7 +54,9 @@ Using the GUI only allows for assigning one engineer at a time.
 
 `/oncall 18.9.1 -o @willem.jager -b @hai.phan @jonathan.anstett`
 
-Use this command to assign engineers to a release (`18.9.1`) as either on call (`-o`) or backup (`-b`). This command doesn't overwrite any engineers already assigned - it only adds new ones.
+Use this command to assign engineers to a release (`18.9.1`) as either on call (`-o`) or backup (`-b`). This command allows for assigning multiple engineers at once, and doesn't overwrite any engineers already assigned - it only adds new ones.
+
+These methods create reminders using the Slack Reminder Bot for the engineers you assign. You (who created the reminders, by assigning those people to a release) and they (who will be reminded) can use the `/remind list` command in Slack to see the reminders that have been created. By default these reminders are set for 8PM PST on the night of the release, one hour before the default release time of 9PM PST.
 
 </p>
 </details>
@@ -77,6 +79,8 @@ Using the GUI only allows for removing two engineers at a time: one backup and o
 `/oncall 18.9.1 -r @kirby.walls @renee.gallison`
 
 Use this command to remove (`-r`) engineers from a release (`18.9.1`). This command allows for removing multiple engineers at once, with no need to specify whether they're on call or backup.
+
+These methods also remove the Slack reminders previously created for the engineers you remove.
 
 </p>
 </details>
@@ -101,6 +105,8 @@ This command will open a modal for adding a release (`19.5.1`) if it hasn't been
 `/oncall 19.5.1 5/3/19`
 
 This command bypasses the modal and creates a new release (`19.5.1`) on the specified date (`5/3/19`) if that release doesn't already exist.
+
+These methods automatically assign engineers and create Slack reminders for those engineers. Each release is defaulted to start at 9PM PST on the date you specify.
 
 </p>
 </details>
@@ -168,7 +174,7 @@ Once you've selected a release to work with, click the **Manage the engineer poo
 
 `/oncall help`
 
-This command opens a message with info on how to use the app and its commands, and explains what you can do with the GUI. Pretty cool ✌️
+This command opens a message with info on how to use the app and its commands, and explains what you can do with the GUI. Useful ✌️
 
 </p>
 </details>
@@ -241,11 +247,11 @@ The app needs the following Permission Scopes, set in the **OAuth and Permission
 
 Then you need to save some Slack tokens to the `variables.env` file in the repo:
 1. Get the **OAuth Access Token** from the **Install App** page of the Slack dashboard, and set it as the SLACK_ACCESS_TOKEN environment variable.
-2. Get the **Verification Token** from the **Basic Information page of the dashboard and set it as the SLACK_VERIFICATION_TOKEN.
+2. Get the **Verification Token** from the **Basic Information** page of the dashboard and set it as the SLACK_VERIFICATION_TOKEN.
 
 Now the Slack App should be good to go! You just need to set up a MongoDB database with an admin user. I used [mLab](https://mlab.com/) to host the database, but you can also run one locally. Either way, grab the connection string and save it as the DATABASE env variable: `DATABASE=mongodb://USERNAME:PASSWORD@abc123.mlab.com:77777/on-call-bot`
 
-Finally you're ready to start using the app! The `dev` script in package.json uses `nodemon` to hot-reload when you save changes to a file and `ndb` to debug the JavaScript. It runs on port 7777 by default (specified in `variables.env`).
+Finally you're ready to start using the app! The `dev` script in package.json uses [nodemon](https://www.npmjs.com/package/nodemon) to hot-reload when you save changes to a file and [ndb](https://www.npmjs.com/package/ndb) to debug the JavaScript. It runs on port 7777 by default (specified in `variables.env`).
 
 Now you should be able to talk to the app in one of your Slack workspace's channels with the `/oncall` command.
 
