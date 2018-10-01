@@ -18,6 +18,7 @@ It's meant to replace the spreadsheet table we've been using to keep track of wh
 ### View Release Info
 <details><summary>Show / Hide</summary>
 <p>
+
 #### Use the GUI:
 
 Type the `/oncall` command in the Consumer Services Group channel (or any other Slack channel the bot has been added to) and use the menu that appears to choose a release you want to see. This flow is illustrated in the GIF above.
@@ -29,12 +30,14 @@ Type the `/oncall` command in the Consumer Services Group channel (or any other 
 This command will display the information for the release named **18.9.1** if exists, or will open a modal for adding the release if it hasn't been created yet in the app.
 
 ![Gif illustrating the /oncall X.X.X command usage](http://i.imgur.com/iNDGfsl.gif)
+
 </p>
 </details>
 
 ### Assign Engineers
 <details><summary>Show / Hide</summary>
 <p>
+
 #### Use the GUI:
 
 Once you've selected a release to view, click the **Assign engineer** button to open a modal for assigning an engineer. Choose the engineer's name from the dropdown, and then decide whether you're assigning them as _on call_ or _backup_. In order to assign someone to a release, that person needs to have already been added to the pool of available engineers. See [Add an engineer to the pool](#add-an-engineer-to-the-pool)
@@ -48,11 +51,14 @@ Using the GUI only allows for assigning one engineer at a time.
 `/oncall 18.9.1 -o @willem.jager -b @hai.phan @jonathan.anstett`
 
 Use this command to assign engineers to a release (`18.9.1`) as either on call (`-o`) or backup (`-b`). This command doesn't overwrite any engineers already assigned - it only adds new ones.
+
 </p>
 </details>
----
 
 ### Remove an Engineer 
+
+<details><summary>Show / Hide</summary>
+<p>
 
 #### Use the GUI:
 
@@ -68,9 +74,13 @@ Using the GUI only allows for removing two engineers at a time: one backup and o
 
 Use this command to remove (`-r`) engineers from a release (`18.9.1`). This command allows for removing multiple engineers at once, with no need to specify whether they're on call or backup.
 
----
+</p>
+</details>
 
 ### Add a Release
+
+<details><summary>Show / Hide</summary>
+<p>
 
 #### Use the GUI:
 
@@ -88,9 +98,13 @@ This command will open a modal for adding a release (`19.5.1`) if it hasn't been
 
 This command bypasses the modal and creates a new release (`19.5.1`) on the specified date (`5/3/19`) if that release doesn't already exist.
 
----
+</p>
+</details>
 
 ### Edit Release Info
+
+<details><summary>Show / Hide</summary>
+<p>
 
 #### Use the GUI:
 
@@ -104,9 +118,13 @@ Once you've selected a release to view, click the **Edit release info** button t
 
 This command opens a modal for updating a release (`19.5.1`) with the specified date (`5/3/19`) if that release _does_ already exist.
 
----
+</p>
+</details>
 
 ### View Previous Releases
+
+<details><summary>Show / Hide</summary>
+<p>
 
 #### Use the GUI:
 
@@ -114,9 +132,13 @@ If you're trying to edit a release's assignments, sometimes it's helpful to see 
 
 ![Gif showing how to use the Last 3 releases button](http://i.imgur.com/7UzYvoX.gif)
 
----
+</p>
+</details>
 
 ### Manage the Pool of Engineers
+
+<details><summary>Show / Hide</summary>
+<p>
 
 Engineers are only assignable to a release if they've been added to the pool. This is to ensure that On Call Bot knows the discipline (frontend or backend) and pod that each engineer belongs to, so it can assign engineers to releases automatically. See [Automatic Assignment](#automatic-assignment)
 
@@ -130,7 +152,8 @@ Once you've selected a release to work with, click the **Manage the engineer poo
 
 Once you've selected a release to work with, click the **Manage the engineer pool** button to open the management view. Then click the **Remove engineer** button to open a modal for removing an existing engineer. Choose the engineer's name from the dropdown and click the **Remove** button.
 
----
+</p>
+</details>
 
 ## Development
 ```
