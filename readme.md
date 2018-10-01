@@ -9,10 +9,15 @@ It's meant to replace the spreadsheet table we've been using to keep track of wh
 
 ![Gif illustrating basic /oncall command usage](http://i.imgur.com/rounAl8.gif)
 
+### Table of Contents  
+[Headers](#headers)  
+[Emphasis](#emphasis) 
+
 ## How To Use
 
 ### View Release Info
-
+<details><summary>Show / Hide</summary>
+<p>
 #### Use the GUI:
 
 Type the `/oncall` command in the Consumer Services Group channel (or any other Slack channel the bot has been added to) and use the menu that appears to choose a release you want to see. This flow is illustrated in the GIF above.
@@ -24,11 +29,12 @@ Type the `/oncall` command in the Consumer Services Group channel (or any other 
 This command will display the information for the release named **18.9.1** if exists, or will open a modal for adding the release if it hasn't been created yet in the app.
 
 ![Gif illustrating the /oncall X.X.X command usage](http://i.imgur.com/iNDGfsl.gif)
-
----
+</p>
+</details>
 
 ### Assign Engineers
-
+<details><summary>Show / Hide</summary>
+<p>
 #### Use the GUI:
 
 Once you've selected a release to view, click the **Assign engineer** button to open a modal for assigning an engineer. Choose the engineer's name from the dropdown, and then decide whether you're assigning them as _on call_ or _backup_. In order to assign someone to a release, that person needs to have already been added to the pool of available engineers. See [Add an engineer to the pool](#add-an-engineer-to-the-pool)
@@ -42,7 +48,8 @@ Using the GUI only allows for assigning one engineer at a time.
 `/oncall 18.9.1 -o @willem.jager -b @hai.phan @jonathan.anstett`
 
 Use this command to assign engineers to a release (`18.9.1`) as either on call (`-o`) or backup (`-b`). This command doesn't overwrite any engineers already assigned - it only adds new ones.
-
+</p>
+</details>
 ---
 
 ### Remove an Engineer 
