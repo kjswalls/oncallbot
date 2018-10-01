@@ -10,6 +10,7 @@ Add validation so releases can only be added in the future
 Add remove command for multiple removals at once?
 Add help command
 Make readme
+Add help command to readme
 
 // To-Do
 Add logic for updating reminders when release date is updated
@@ -20,4 +21,4 @@ Remove unnecessary packages from package.json
 Set up logging?
 Refactor / clean up
 Make usable by multiple pods?
-Add validation so releases can only be assigned in the future
+Add validation so releases can only be assigned to and removed from in the future

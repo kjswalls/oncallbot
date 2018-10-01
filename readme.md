@@ -159,6 +159,20 @@ Once you've selected a release to work with, click the **Manage the engineer poo
 </p>
 </details>
 
+### Help
+
+<details><summary>Show / Hide</summary>
+<p>
+
+#### Use a command:
+
+`/oncall help`
+
+This command opens a message with info on how to use the app and its commands, and explains what you can do with the GUI. Pretty cool ✌️
+
+</p>
+</details>
+
 ## Automatic Assignment
 When you create a release, the app automatically assigns engineers to that release based on some rules:
 * Each release must have two front end and two back end engineers assigned (1 primary and 1 backup for each discipline)
@@ -190,11 +204,9 @@ Anyway, I think it's still a good starting point, because we can still edit rele
 
 First, clone / download the repo. 😊 Use the `variables.env.sample` to create a `variables.env` file to set environment variables (and do the same with the `variables.env.now.sample` file if you're going to deploy with Now).
 
-To test this bot locally, you'll need to create a Slack App in a workspace you can test with. It's super quick; their docs are [here](https://api.slack.com/slack-apps#creating_apps)
+To test this bot locally, you'll need some way for your Slack App to make requests to the bot's Node / Express server while it's running locally, so you can test changes quickly. I used [localtunnel](https://www.npmjs.com/package/localtunnel) (wrapped by the super handy [localtunnel-restarter](https://github.com/kirillshevch/localtunnel-restarter) package to auto-restart LT when it crashes), but you can also use [ngrok](https://ngrok.com/) or any other cool wizardry.
 
-You'll also need some way for your Slack App to make requests to the bot's Node / Express server while it's running locally, so you can test changes quickly. I used [localtunnel](https://www.npmjs.com/package/localtunnel) (wrapped by the super handy [localtunnel-restarter](https://github.com/kirillshevch/localtunnel-restarter) package to auto-restart LT when it crashes), but you can also use [ngrok](https://ngrok.com/) or any other cool wizardry.
-
-Start the Express server like this:
+Start the app's Express server like this:
 
 ```
 $ cd oncallbot
@@ -206,6 +218,8 @@ And make it available on the web like this (in another terminal session):
 ```
 $ localtunnel-restarter --port 7777 --subdomain oncallbot
 ```
+
+You'll also need to create a Slack App in a workspace you can test with. It's super quick; their docs are [here](https://api.slack.com/slack-apps#creating_apps)
 
 Then you'll need to set up **Interactive Components**, **Slash Commands**, and **Permissions** for the Slack App.
 
