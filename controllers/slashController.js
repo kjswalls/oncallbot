@@ -24,7 +24,7 @@ exports.oncall = async (req, res) => {
   const removeEngineersRegEx = /(^\d\d\.\d{1,2}\.\d{1}) (-[r]) ((<@(\w+)(\|(\w+))?>)(( (<@)(\w+)(\|(\w+))?>)*))?/;
   
   // `/oncall 18.9.1 9/7/18`
-  const addReleaseRegEx = /(\d\d\.\d{1,2}\.\d{1})( ([1-9]|0[1-9]|1[012])[- /.]([1-9]|0[1-9]|[12][0-9]|3[01])[- /.]((19|20)\d\d|\d\d))/;
+  const addReleaseRegEx = /(\d\d\.\d{1,2}\.\d{1}) (([1-9]|0[1-9]|1[012])[- /.]([1-9]|0[1-9]|[12][0-9]|3[01])[- /.]((19|20)\d\d|\d\d))/;
 
   const helpRegEx = /(^help$)/;
 
@@ -190,7 +190,7 @@ exports.oncall = async (req, res) => {
       };
 
       if (errors.errors.length) {
-        return res.send('To create a new release, you must enter a date in the future. Please try again.')
+        return res.send(errors.errors[0].error); // lol
       }
 
       res.send('');
@@ -198,7 +198,7 @@ exports.oncall = async (req, res) => {
 
       // if release exists, open dialog for editing release
       if (release) {
-        slackResponse = await releases.renderEditReleaseModal(slackReq);
+        slackResponse = await releases.renderEditReleaseModal(slackReq, releaseName);
         return slackResponse;
       }
 

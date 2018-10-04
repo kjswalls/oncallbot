@@ -14,10 +14,12 @@ Add help command to readme
 
 // To-Do
 Add logic for updating reminders when release date is updated
+Fix release date timezone issue when deploying to Now
 Remove random cruft files (babel?)
 Add slack Signing Secrets verification
 Update .env sample files
 Remove unnecessary packages from package.json
+Test error scenarios in production deployment
 Set up logging?
 Refactor / clean up
 Make usable by multiple pods?

@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 require('dotenv').config({ path: 'variables.env' });
 
 // connect to our database, handle bad connections
-mongoose.connect(process.env.DATABASE, { useNewUrlParser: true });
+mongoose.set('useFindAndModify', false);
+mongoose.connect(process.env.DATABASE, { useNewUrlParser: true, useCreateIndex: true, });
 mongoose.Promise = global.Promise;
 mongoose.connection.on('error', (err) => {
   console.error(`DB error: ${err.message}`);

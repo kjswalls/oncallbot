@@ -114,11 +114,11 @@ exports.renderAddReleaseModal = async (slackReq, releaseName = null) => {
   return slackResponse;
 };
 
-exports.renderEditReleaseModal = async (slackReq) => {
+exports.renderEditReleaseModal = async (slackReq, name = null) => {
   console.log('edit release', slackReq);
-  const releaseName = slackReq.original_message.attachments[0].title;
+  const releaseName = name || slackReq.original_message.attachments[0].title;
   const release = await exports.getReleaseByName(releaseName);
-  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', timeZone: 'America/Tijuana' });
+  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', timeZone: 'America/Los_Angeles' });
 
   const dialog = messages.editReleaseModal(slackReq.trigger_id, releaseName, releaseDate, release._id);
 
@@ -133,6 +133,7 @@ exports.editRelease = async (slackReq) => {
   };
   const releaseId = slackReq.state;
   const title = `Release *${slackReq.submission.name}* updated :point_up:`;
+  const oldRelease = await Release.findOne({ name: slackReq.submission.name });
   const updatedRelease = await Release.findOneAndUpdate(
     { _id: releaseId },
     formData,
@@ -140,13 +141,24 @@ exports.editRelease = async (slackReq) => {
   );
 
   exports.displayRelease(updatedRelease._id, slackReq.response_url, title);
+
+  // if the date has been updated, delete and re-create all previous reminders for this release
+  if (oldRelease && oldRelease.date !== updatedRelease.date) {
+    const primaryEngineers = await Engineer.find({ _id: { $in: updatedRelease.primaryEngineers }});
+    const backupEngineers = await Engineer.find({ _id: { $in: updatedRelease.backupEngineers }});
+    const engineers = [...primaryEngineers, ...backupEngineers];
+    await reminders.deleteReminders(engineers, oldRelease.date, slackReq.response_url);
+    await reminders.createReminders(updatedRelease, primaryEngineers, backupEngineers, slackReq.response_url);
+  }
+
+  return;
 };
 
 exports.addRelease = async (name, date, responseUrl) => {
   const engineersAssigned = await rotation.assignEngineers(name);
   const releaseData = {
     name,
-    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric', timeZone: 'America/Tijuana' }),
+    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric', timeZone: 'America/Los_Angeles' }),
     primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
     backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
   };
