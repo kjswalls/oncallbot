@@ -1,12 +1,4 @@
-const morgan = require('morgan');
-const tracer = require('tracer');
 const fetch = require('node-fetch');
-
-exports.log = (() => {
-  const logger = tracer.colorConsole();
-  logger.requestLogger = morgan('dev');
-  return logger;
-})();
 
 exports.getFromSlack = async (url) => {
   const response = await fetch(url, {

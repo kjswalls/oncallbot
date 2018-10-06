@@ -16,20 +16,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@slack/client": "^4.4.0",
-    "babel-cli": "^6.26.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
-    "eslint": "^5.4.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.14.0",
     "express": "^4.16.3",
     "mongoose": "^5.3.1",
-    "morgan": "^1.9.0",
-    "node-fetch": "^2.2.0",
-    "tracer": "^0.9.1"
+    "node-fetch": "^2.2.0"
   },
   "devDependencies": {
     "ndb": "^1.0.26",

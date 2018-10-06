@@ -11,16 +11,15 @@ Add remove command for multiple removals at once?
 Add help command
 Make readme
 Add help command to readme
-
-// To-Do
 Add logic for updating reminders when release date is updated
-Fix release date timezone issue when deploying to Now
 Remove random cruft files (babel?)
+Remove unnecessary packages from package.json
 Add slack Signing Secrets verification
 Update .env sample files
-Remove unnecessary packages from package.json
+
+// To-Do
+Fix release date timezone issue when deploying to Now
 Test error scenarios in production deployment
-Set up logging?
 Refactor / clean up
 Make usable by multiple pods?
 Add validation so releases can only be assigned to and removed from in the future

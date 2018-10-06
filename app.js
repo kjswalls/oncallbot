@@ -1,14 +1,9 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+
 const routes = require('./routes/index');
 const errorHandlers = require('./handlers/errorHandlers');
 
 const app = express();
-
-// take raw requests and turn them into usable properties on req.body
-app.use(bodyParser.json());
-// allow for form data (form-urlencoded header) and nested form fields (extended: true)
-app.use(bodyParser.urlencoded({ extended: true }));
 
 // then check our routes
 app.use('/', routes);
