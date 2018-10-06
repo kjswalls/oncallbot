@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-// const queryString = require('query-string');
 
 module.exports = (req, res, next) => {
   const reject = () => {

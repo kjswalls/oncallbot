@@ -247,7 +247,7 @@ The app needs the following Permission Scopes, set in the **OAuth and Permission
 
 Then you need to save some Slack tokens to the `variables.env` file in the repo:
 1. Get the **OAuth Access Token** from the **Install App** page of the Slack dashboard, and set it as the SLACK_ACCESS_TOKEN environment variable.
-2. Get the **Slack Signing Secret** from the **Basic Information** page of the dashboard and set it as the SLACK_SIGNING_SECRET.
+2. Get the **Signing Secret** from the **Basic Information** page of the dashboard and set it as the SLACK_SIGNING_SECRET.
 
 Now the Slack App should be good to go! You just need to set up a MongoDB database with an admin user. I used [mLab](https://mlab.com/) to host the database, but you can also run one locally. Either way, grab the connection string and save it as the DATABASE env variable: `DATABASE=mongodb://USERNAME:PASSWORD@abc123.mlab.com:77777/on-call-bot`
 
