@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
 const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 const engineers = require('./engineerController');
@@ -8,6 +9,7 @@ const rotation = require('../handlers/rotation');
 const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
 const RELEASE_START_TIME = '21:00'; // 9 PM
+moment.tz.setDefault("America/Los_Angeles");
 
 exports.validateReleaseInfo = (formData) => {
   const name = formData.name;
@@ -115,10 +117,9 @@ exports.renderAddReleaseModal = async (slackReq, releaseName = null) => {
 };
 
 exports.renderEditReleaseModal = async (slackReq, name = null) => {
-  console.log('edit release', slackReq);
   const releaseName = name || slackReq.original_message.attachments[0].title;
   const release = await exports.getReleaseByName(releaseName);
-  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', timeZone: 'America/Los_Angeles' });
+  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' });
 
   const dialog = messages.editReleaseModal(slackReq.trigger_id, releaseName, releaseDate, release._id);
 
@@ -156,15 +157,19 @@ exports.editRelease = async (slackReq) => {
 
 exports.addRelease = async (name, date, responseUrl) => {
   const engineersAssigned = await rotation.assignEngineers(name);
+  const dateString = `${date} ${RELEASE_START_TIME}`;
+  const dateCalifornia = moment(dateString, 'M/D/YY HH:mm');
+  const formattedDate = dateCalifornia.format('M/D/YY, h:mm A')
+
   const releaseData = {
     name,
-    date: new Date(`${date} ${RELEASE_START_TIME}`).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit', hour: 'numeric', minute: 'numeric', timeZone: 'America/Los_Angeles' }),
+    date: dateCalifornia,
     primaryEngineers: engineersAssigned.primaryEngineers.map(eng => eng ? eng.id : null),
     backupEngineers: engineersAssigned.backupEngineers.map(eng => eng ? eng.id : null),
   };
   let release = await (new Release(releaseData).save());
 
-  let title = `Release *${releaseData.name}* added for *${releaseData.date}* :ok_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
+  let title = `Release *${releaseData.name}* added for *${formattedDate}* :ok_hand:\nUse the \`/remind list\` command to see reminders that have been set.`;
   if (!release) {
     title = `Release *${releaseData.name}* already exists.`;
     release = await Release.findOne({ name });
@@ -173,12 +178,9 @@ exports.addRelease = async (name, date, responseUrl) => {
   const slackResponse = await exports.displayRelease(release.id, responseUrl, title);
 
   // create reminders for engineers
-  // const reminderText = `Release ${name} starts at 9PM. You're on call :slightly_smiling_face:`;
-  // const reminder = await reminders.createReminders(release.date, reminderText, [...engineersAssigned.primaryEngineers, ...engineersAssigned.backupEngineers], responseUrl);
-    const reminder = await reminders.createReminders(release, engineersAssigned.primaryEngineers, engineersAssigned.backupEngineers, responseUrl);
+  const reminder = await reminders.createReminders(release, engineersAssigned.primaryEngineers, engineersAssigned.backupEngineers, responseUrl);
 
   const updatedReleases = await rotation.updateFutureReleases(release);
-  // const updatedReleases = await exports.updateReleaseEngineers(release);
 
   return slackResponse;
 };

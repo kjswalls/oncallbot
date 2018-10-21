@@ -16,9 +16,9 @@ Remove random cruft files (babel?)
 Remove unnecessary packages from package.json
 Add slack Signing Secrets verification
 Update .env sample files
+Fix release date timezone issue when deploying to Now
 
 // To-Do
-Fix release date timezone issue when deploying to Now
 Test error scenarios in production deployment
 Refactor / clean up
 Make usable by multiple pods?

@@ -12,7 +12,6 @@ exports.oncall = async (req, res) => {
   const slackReq = req.body;
   let slackResponse = null;
   const text = slackReq.text;
-  console.log('command text: ', text);
 
   // `/oncall 18.9.1`
   const releaseNameRegEx = /(^\d\d\.\d{1,2}\.\d{1}$)/;
@@ -35,7 +34,6 @@ exports.oncall = async (req, res) => {
 
   } else if (releaseNameRegEx.test(text)) { // view release info: `/oncall 18.9.1`
       res.send('');
-      console.log('NAME regex matched');
       const matches = releaseNameRegEx.exec(text);
       const releaseName = matches[0];
       const release = await releases.getReleaseByName(releaseName);
@@ -57,7 +55,6 @@ exports.oncall = async (req, res) => {
 
 
   } else if (assignEngineersRegEx.test(text)) { // assign people to release: `/oncall 18.9.1 -o @willem.jager -b @hai.phan`
-      console.log('ASSIGN regex matched');
       res.send('Got it! Loading...');
       const matches = assignEngineersRegEx.exec(text);
       // const slackIdRegEx = /((<@(\w+)(\|(\w+))?>) ?)/g;
@@ -158,7 +155,6 @@ exports.oncall = async (req, res) => {
       }
 
   } else if (removeEngineersRegEx.test(text)) { // remove people from release: `/oncall 18.9.1 -r @kirby.walls @renee.gallison`
-  console.log('REMOVE regex matched');
   res.send('Got it! Loading...');
   const matches = removeEngineersRegEx.exec(text);
   const releaseName = matches[1];
@@ -179,7 +175,6 @@ exports.oncall = async (req, res) => {
   }
 
   } else if (addReleaseRegEx.test(text)) { // add new release: `/oncall 18.9.1 9/7/18`
-      console.log('ADD regex matched');
       const matches = addReleaseRegEx.exec(text);
       const releaseName = matches[1];
       const releaseDate = matches[2];
@@ -208,7 +203,6 @@ exports.oncall = async (req, res) => {
 
   } else if (helpRegEx.test(text)) { // ask for help: `/oncall help`
   res.send('');
-  console.log('HELP regex matched');
   const message = messages.help();
   slackResponse = await utils.postToSlack(slackReq.response_url, message, true);
   return slackResponse;

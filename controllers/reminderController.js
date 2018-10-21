@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
 const utils = require('../handlers/utils');
 const messages = require('../handlers/messages');
 
 const Reminder = mongoose.model('Reminder');
-const RELEASE_REMINDER_HOUR = '20'; // 8 PM
+const RELEASE_REMINDER_OFFSET = 1; // 1 hour before release
 
 // as of 9/29/18 it's not currently possible to create a channel reminder via the slack API.
 // I'm gonna leave this method here just in case they add that in the future, though.
 exports.createChannelReminder = async (release, responseUrl, channelId) => {
-  const timestamp = new Date(release.date).setHours(RELEASE_REMINDER_HOUR).valueOf();
+  const date = new Date(release.date);
+  const timestamp = date.setHours(date.getHours() - RELEASE_REMINDER_OFFSET).valueOf();
   const seconds = Math.floor(timestamp / 1000); // timestamp is in milliseconds
   const primaryAtMentions = release.primaryEngineers.map(eng => `<@${eng.slackId}>`);
   const backupAtMentions = release.backupEngineers.map(eng => `<@${eng.slackId}>`);
@@ -26,8 +28,10 @@ exports.createChannelReminder = async (release, responseUrl, channelId) => {
 };
 
 exports.createReminders = async (release, primaries, backups, responseUrl) => {
-  const timestamp = new Date(release.date).setHours(RELEASE_REMINDER_HOUR).valueOf();
-  const seconds = Math.floor(timestamp / 1000); // timestamp is in milliseconds
+  const date = moment(release.date).subtract(RELEASE_REMINDER_OFFSET, 'hours').tz('America/Los_Angeles');
+  const seconds = date.utc().unix();
+  const timestamp = date.valueOf();
+
   const primaryText = `Release ${release.name} starts in one hour. You're *on call* :slightly_smiling_face:`;
   const backupText = `Release ${release.name} starts in one hour. You're on *backup* :slightly_smiling_face:`;
   let users = [...primaries ? primaries : [], ...backups ? backups : []];
@@ -54,14 +58,6 @@ exports.createReminders = async (release, primaries, backups, responseUrl) => {
     });
   }
 
-  // const reminderInputs = users.map((user) => {
-  //   return {
-  //     text,
-  //     time: seconds,
-  //     user: user.slackId,
-  //   };
-  // });
-
   const reminderInputs = [...primaryInputs, ...backupInputs];
 
   const postPromises = reminderInputs.map((reminderInput) => utils.postToSlack('https://slack.com/api/reminders.add', reminderInput));
@@ -75,7 +71,7 @@ exports.createReminders = async (release, primaries, backups, responseUrl) => {
       .map((slackResponse, index) => {
       return {
         slackId: slackResponse.reminder.id,
-        engineer: users[index].id,
+        engineer: users.find(user => user.slackId === slackResponse.reminder.user),
         time: timestamp,
       };
     });
@@ -110,7 +106,11 @@ exports.createReminders = async (release, primaries, backups, responseUrl) => {
 };
 
 exports.deleteReminders = async (engineerIds, date, responseUrl) => {
-  const timestamp = new Date(date).setHours(RELEASE_REMINDER_HOUR).valueOf(); // valueOf returns date value in milliseconds
+  // const dateObj = new Date(date);
+  const dateObj = moment(date).subtract(1, 'hours').tz('America/Los_Angeles');
+  // const dateCalifornia = moment.tz(dateObj, 'America/Los_Angeles');
+  // const timestamp = dateObj.setHours(dateObj.getHours() - RELEASE_REMINDER_OFFSET).valueOf(); // valueOf returns date value in milliseconds
+  const timestamp = dateObj.valueOf();
   let slackResponses = null;
 
   const reminders = await Reminder.find({ engineer: {$in: engineerIds}, time: timestamp });

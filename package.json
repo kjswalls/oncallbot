@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "now": {
-    "alias": "oncallbot",
-    "dotenv": "variables.env.now"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kjswalls/oncallbot"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./start.js",
-    "dev": "ndb nodemon ./start.js"
+    "dev": "ndb nodemon ./start.js",
+    "now": "now --public && now alias"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +20,7 @@
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
+    "moment-timezone": "^0.5.21",
     "mongoose": "^5.3.1",
     "node-fetch": "^2.2.0"
   },

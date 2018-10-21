@@ -63,7 +63,6 @@ exports.assignEngineers = async (releaseName) => {
   assigned.backupEngineers.push(frontEndsAssigned.backup, backEndsAssigned.backup);
   assigned.backupEngineers = assigned.backupEngineers.filter(eng => eng !== null);
 
-  console.log(`engineers assigned from ${releaseName}`, assigned);
   // update the database with the new weights
   const engineersArr = [...assigned.primaryEngineers, ...assigned.backupEngineers];
   const updatePromises = engineersArr.map(async (engineer) => {
@@ -75,10 +74,6 @@ exports.assignEngineers = async (releaseName) => {
   });
 
   const updatedEngineers = await Promise.all(updatePromises);
-
-  // // update the hashes
-  // const updatedHash = updateHash(feHash, assigned);
-  // console.log(updatedHash);
 
   return assigned;
 };

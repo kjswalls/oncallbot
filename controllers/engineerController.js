@@ -57,7 +57,6 @@ exports.getEngineersLeftInPool = (release, engineerOptions) => {
 };
 
 exports.renderAssignEngineerModal = async (slackReq) => {
-  console.log('from render method: ', slackReq);
   const releaseName = slackReq.original_message.attachments[0].title;
   const engineerOptions = await exports.getEngineersAsOptions();
   const release = await releases.getReleaseByName(releaseName);

@@ -1,0 +1,4 @@
+{
+  "alias": "oncallbot",
+  "dotenv": "variables.env.now"
+}
