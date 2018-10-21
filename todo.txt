@@ -20,6 +20,6 @@ Fix release date timezone issue when deploying to Now
 
 // To-Do
 Test error scenarios in production deployment
-Refactor / clean up
+Refactor / clean up / DRY up
 Make usable by multiple pods?
 Add validation so releases can only be assigned to and removed from in the future
