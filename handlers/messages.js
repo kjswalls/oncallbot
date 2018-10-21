@@ -1,3 +1,5 @@
+const moment = require('moment-timezone');
+
 exports.selectRelease = (releaseOptions, title) => {
   const message = {
     response_type: 'in_channel',
@@ -54,7 +56,7 @@ exports.displayHistory = (releases, backToRelease, limit, channel, user) => {
       color: 'good',
       pretext: '',
       title: release.name,
-      text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US')}\n`,
+      text: `Go-live date: ${moment(release.date).format('M/D/YY')}\n`,
       fields: [
           {
               title: 'On call:',
@@ -112,7 +114,7 @@ exports.displayRelease = (release, primaryEngineers, backupEngineers, remainingE
         color: 'good',
         pretext: title,
         title: release.name,
-        text: `Go-live date: ${new Date(release.date).toLocaleDateString('en-US')}\n`,
+        text: `Go-live date: ${moment(release.date).format('M/D/YY')}\n`,
         fields: [
             {
                 title: 'On call:',
@@ -633,6 +635,16 @@ exports.help = () => {
         ]
       }
     ]
+  };
+
+  return message;
+};
+
+exports.engineerNotFound = (channel, user) => {
+  const message = {
+    text: 'Sorry, On Call Bot couldn\'t find one or more of the engineers you tried to assign. Please make sure all the engineers you\'re assigning have already been added to the pool.',
+    channel,
+    user,
   };
 
   return message;

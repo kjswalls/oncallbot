@@ -9,7 +9,7 @@ const RELEASE_REMINDER_OFFSET = 1; // 1 hour before release
 // as of 9/29/18 it's not currently possible to create a channel reminder via the slack API.
 // I'm gonna leave this method here just in case they add that in the future, though.
 exports.createChannelReminder = async (release, responseUrl, channelId) => {
-  const date = new Date(release.date);
+  const date = moment(release.date);
   const timestamp = date.setHours(date.getHours() - RELEASE_REMINDER_OFFSET).valueOf();
   const seconds = Math.floor(timestamp / 1000); // timestamp is in milliseconds
   const primaryAtMentions = release.primaryEngineers.map(eng => `<@${eng.slackId}>`);
@@ -106,11 +106,8 @@ exports.createReminders = async (release, primaries, backups, responseUrl) => {
 };
 
 exports.deleteReminders = async (engineerIds, date, responseUrl) => {
-  // const dateObj = new Date(date);
-  const dateObj = moment(date).subtract(1, 'hours').tz('America/Los_Angeles');
-  // const dateCalifornia = moment.tz(dateObj, 'America/Los_Angeles');
-  // const timestamp = dateObj.setHours(dateObj.getHours() - RELEASE_REMINDER_OFFSET).valueOf(); // valueOf returns date value in milliseconds
-  const timestamp = dateObj.valueOf();
+  const dateObj = moment(date).subtract(RELEASE_REMINDER_OFFSET, 'hours').tz('America/Los_Angeles');
+  const timestamp = dateObj.valueOf(); // valueOf returns date value in milliseconds
   let slackResponses = null;
 
   const reminders = await Reminder.find({ engineer: {$in: engineerIds}, time: timestamp });

@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
+moment.tz.setDefault("America/Los_Angeles");
 
 // import environment variables
 require('dotenv').config({ path: 'variables.env' });

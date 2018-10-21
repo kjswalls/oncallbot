@@ -9,7 +9,6 @@ const rotation = require('../handlers/rotation');
 const Release = mongoose.model('Release');
 const Engineer = mongoose.model('Engineer');
 const RELEASE_START_TIME = '21:00'; // 9 PM
-moment.tz.setDefault("America/Los_Angeles");
 
 exports.validateReleaseInfo = (formData) => {
   const name = formData.name;
@@ -119,7 +118,7 @@ exports.renderAddReleaseModal = async (slackReq, releaseName = null) => {
 exports.renderEditReleaseModal = async (slackReq, name = null) => {
   const releaseName = name || slackReq.original_message.attachments[0].title;
   const release = await exports.getReleaseByName(releaseName);
-  const releaseDate = new Date(release.date).toLocaleDateString('en-us', { day: 'numeric', month: 'numeric',  year: '2-digit' });
+  const releaseDate = moment(release.date).format('M/D/YY');
 
   const dialog = messages.editReleaseModal(slackReq.trigger_id, releaseName, releaseDate, release._id);
 
@@ -266,7 +265,7 @@ exports.removeEngineersFromRelease = async (releaseName, engineers, responseUrl)
   const namesRemoved = engineerObjs.map(eng => eng.name);
   const updatedEngineers = await Promise.all(engUpdatePromises);
 
-  let title = `No engineers removed. *${namesRemoved.join(', ')}* not assigned to this release.`;
+  let title = `No engineers removed. *${namesRemoved.join(', ').length ? namesRemoved.join(', ') : 'Unknown engineer'}* not assigned to this release.`;
 
   if (namesRemoved.length) {
     title = `*${releaseName}* has been updated :point_up: *${namesRemoved.join(', ')}* removed`;

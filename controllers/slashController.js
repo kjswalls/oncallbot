@@ -101,6 +101,12 @@ exports.oncall = async (req, res) => {
           });
 
           [...primaryEngineers] = await Promise.all(primaryPromises);
+
+          if (primaryEngineers.some((engineer => engineer === null))) {
+            const message = messages.engineerNotFound(slackReq.channel_id, slackReq.user_id);
+            const response = await utils.postToSlack('https://slack.com/api/chat.postEphemeral', message);
+            return response;
+          }
         }
 
         if (backup) {
@@ -122,6 +128,12 @@ exports.oncall = async (req, res) => {
           });
 
           [...backupEngineers] = await Promise.all(backupPromises);
+          
+          if (backupEngineers.some((engineer => engineer === null))) {
+            const message = messages.engineerNotFound(slackReq.channel_id, slackReq.user_id);
+            const response = await utils.postToSlack('https://slack.com/api/chat.postEphemeral', message);
+            return response;
+          }
         }
 
         const engineersToAdd = {
