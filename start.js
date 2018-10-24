@@ -6,7 +6,7 @@ moment.tz.setDefault("America/Los_Angeles");
 require('dotenv').config({ path: 'variables.env' });
 
 // connect to our database, handle bad connections
-mongoose.set('useFindAndModify', false);
+mongoose.set('useFindAndModify', false); // deprecated in mongoDB
 mongoose.connect(process.env.DATABASE, { useNewUrlParser: true, useCreateIndex: true, });
 mongoose.Promise = global.Promise;
 mongoose.connection.on('error', (err) => {

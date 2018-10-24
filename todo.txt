@@ -17,9 +17,9 @@ Remove unnecessary packages from package.json
 Add slack Signing Secrets verification
 Update .env sample files
 Fix release date timezone issue when deploying to Now
+Test error scenarios in production deployment
 
 // To-Do
-Test error scenarios in production deployment
 Refactor / clean up / DRY up
 Make usable by multiple pods?
 Add validation so releases can only be assigned to and removed from in the future

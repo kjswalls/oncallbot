@@ -164,28 +164,4 @@ function getTwoLowestWeights(hash) {
 
   return { onCall, backup };
 }
-
-function updateHash(hash, assigned) {
-  const engineers = [...assigned.primaryEngineers, ...assigned.backupEngineers];
-
-  // for each engineer
-  engineers.forEach((engineer) => {
-    // if engineer is not undefined (too few engineers in the pool to assign 4)
-    if (engineer) {
-      // find them in the the hash by their old weight
-      const weightList = hash.get(engineer.weight - 1);
-      const index = weightList.findIndex(eng => eng.id === engineer.id);
-
-      // increment their old weight
-      weightList[index].weight++;
-
-      // add them to the appropriate hash entry based on weight
-
-      // remove them from their old hash entry
-    }
-  });
-
-  // return updated hash
-  return hash;
-}
   

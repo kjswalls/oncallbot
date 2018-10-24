@@ -34,27 +34,4 @@ const engineerSchema = new Schema({
   },
 });
 
-engineerSchema.virtual('releasePrimary', {
-  ref: 'Release',
-  localField: '_id',
-  foreignField: 'primaryEngineers'
-});
-
-engineerSchema.virtual('releaseBackup', {
-  ref: 'Release',
-  localField: '_id',
-  foreignField: 'backupEngineers'
-});
-
-// populate engineer field on release schema
-function autopopulate(next) {
-  this.populate('releasePrimary');
-  this.populate('releaseBackup');
-  next();
-}
-
-// autopopulate engineer info whenever we search for a release
-// engineerSchema.pre('find', autopopulate);
-// engineerSchema.pre('findOne', autopopulate);
-
 module.exports = mongoose.model('Engineer', engineerSchema);
