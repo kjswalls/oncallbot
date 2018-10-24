@@ -27,7 +27,6 @@ router.use(bodyParser.urlencoded({ verify: rawBodySaver, extended: true }));
 router.use(verificationMiddleware);
 
 router.post('/slack/command/oncall', catchErrors(slashController.oncall));
-router.get('/slack/command/oncall', catchErrors(slashController.oncall));
 router.post('/slack/actions', catchErrors(actionController.handleActions));
 
 module.exports = router;
